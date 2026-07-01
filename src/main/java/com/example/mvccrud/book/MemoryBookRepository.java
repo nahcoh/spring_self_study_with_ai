@@ -43,4 +43,13 @@ public class MemoryBookRepository implements BookRepository {
         return store.containsKey(id);
     }
 
+    @Override
+    public List<Book> search(String title, Integer minPrice, Integer maxPrice) {
+        return store.values().stream()
+            .filter(book -> title == null || title.isBlank() || book.getTitle().contains(title))
+            .filter(book -> minPrice == null || book.getPrice() >= minPrice)
+            .filter(book -> maxPrice == null || book.getPrice() <= maxPrice)
+            .toList();
+    }
+
 }

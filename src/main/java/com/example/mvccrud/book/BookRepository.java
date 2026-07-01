@@ -11,6 +11,8 @@ public interface BookRepository {
 
     List<Book> findAll();
 
+    List<Book> search(String title, Integer minPrice, Integer maxPrice);
+
     void deleteById(Long id);
 
     boolean existsById(Long id);

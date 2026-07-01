@@ -52,5 +52,9 @@ public class BookService {
         return book;
     }
 
+    public List<Book> searchBooks(String title, Integer minPrice, Integer maxPrice) {
+        return bookRepository.search(title, minPrice, maxPrice);
+    }
+
 
 }
