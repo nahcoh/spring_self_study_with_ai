@@ -19,7 +19,7 @@ public class BookService {
 
     public Book findBook(Long id) {
         return bookRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("책을 찾을 수 없습니다."));
+            .orElseThrow(BookNotFoundException::new);
     }
 
     public List<Book> findBooks() {
@@ -34,7 +34,7 @@ public class BookService {
 
     public void deleteBook(Long id) {
         if (!bookRepository.existsById(id)) {
-            throw new IllegalArgumentException("책을 찾을 수 없습니다.");
+            throw new BookNotFoundException();
         }
         bookRepository.deleteById(id);
     }
