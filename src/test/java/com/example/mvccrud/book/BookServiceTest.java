@@ -128,4 +128,47 @@ class BookServiceTest {
             .hasMessage("책을 찾을 수 없습니다.");
 
     }
+
+    @Test
+    public void 제목으로_검색() throws Exception{
+        //given
+        bookService.createBook("자바의 정석", 30000);
+        bookService.createBook("스프링 입문", 25000);
+        bookService.createBook("데미안", 12000);
+
+        //when
+        List<Book> books = bookService.searchBooks("자바", null, null);
+
+        //then
+        assertThat(books).hasSize(1);
+        assertThat(books.get(0).getTitle()).isEqualTo("자바의 정석");
+
+    }
+
+    @Test
+    public void 가격_범위로_검색() throws Exception{
+        //given
+        bookService.createBook("자바의 정석", 30000);
+        bookService.createBook("스프링 입문", 25000);
+        bookService.createBook("데미안", 12000);
+        //when
+        List<Book> books = bookService.searchBooks(null, 20000, 30000);
+
+        //then
+        assertThat(books).hasSize(2);
+    }
+
+    @Test
+    public void 제목과_가격으로_검색() throws Exception{
+        //given
+        bookService.createBook("자바의 정석", 30000);
+        bookService.createBook("스프링 입문", 25000);
+        bookService.createBook("데미안", 12000);
+        //when
+        List<Book> books = bookService.searchBooks("자바", 20000, 40000);
+
+        //then
+        assertThat(books).hasSize(1);
+        assertThat(books.get(0).getTitle()).isEqualTo("자바의 정석");
+    }
 }
