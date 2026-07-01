@@ -62,8 +62,17 @@ public class BookController {
         return ApiResponse.of(new BookResponse(book));
     }
 
+    @PatchMapping("/{id}")
+    public ApiResponse<BookResponse> patchBook(@PathVariable Long id,
+        @RequestBody @Valid BookPatchRequest request) {
+
+        Book book = bookService.patchBook(id, request.getTitle(), request.getPrice());
+        return ApiResponse.of(new BookResponse(book));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
+
         bookService.deleteBook(id);
 
         return ResponseEntity.noContent().build();

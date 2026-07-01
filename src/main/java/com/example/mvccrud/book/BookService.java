@@ -40,4 +40,17 @@ public class BookService {
         bookRepository.deleteById(id);
     }
 
+    public Book patchBook(Long id, String title, Integer price) {
+        Book book = findBook(id);
+
+        if (title != null) {
+            book.changeTitle(title);
+        }
+        if (price != null) {
+            book.changePrice(price);
+        }
+        return book;
+    }
+
+
 }
