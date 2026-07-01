@@ -196,5 +196,74 @@ class BookControllerTest {
         //then
     }
 
+    @Test
+    public void 책_제목_검색_API() throws Exception{
+        //given
+        mockMvc.perform(post("/books")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new BookCreateRequest("자바의 정석", 30000))));
+        mockMvc.perform(post("/books")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new BookCreateRequest("스프링 입문", 25000))));
+        //when
+
+        mockMvc.perform(get("/books/search")
+                .param("title", "자바"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].title").value("자바의 정석"));
+
+        //then
+    }
+
+    @Test
+    public void 첵_가격_범위_검색() throws Exception{
+        //given
+        mockMvc.perform(post("/books")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new BookCreateRequest("자바의 정석", 30000))));
+        mockMvc.perform(post("/books")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new BookCreateRequest("스프링 입문", 25000))));
+        mockMvc.perform(post("/books")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new BookCreateRequest("데미안", 12000))));
+        //when
+
+        mockMvc.perform(get("/books/search")
+                .param("minPrice", "20000")
+                .param("maxPrice", "30000"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(2));
+
+        //then
+    }
+
+    @Test
+    public void 책_제목과_가격_검색_API() throws Exception{
+        //given
+        mockMvc.perform(post("/books")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new BookCreateRequest("자바의 정석", 30000))));
+        mockMvc.perform(post("/books")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new BookCreateRequest("스프링 입문", 25000))));
+        mockMvc.perform(post("/books")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new BookCreateRequest("데미안", 12000))));
+
+        //when
+
+        mockMvc.perform(get("/books/search")
+                .param("title", "자바")
+                .param("minPrice", "20000")
+                .param("maxPrice", "40000"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].title").value("자바의 정석"));
+
+        //then
+    }
+
 
 }
