@@ -26,10 +26,11 @@ public class BookService {
         return bookRepository.findAll();
     }
 
-    public void updateBook(Long id, String title, int price) {
+    public Book updateBook(Long id, String title, int price) {
         Book book = findBook(id);
         book.changeTitle(title);
         book.changePrice(price);
+        return book;
     }
 
     public void deleteBook(Long id) {
