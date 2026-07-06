@@ -5,8 +5,10 @@ import com.example.mvccrud.book.BookService;
 import com.example.mvccrud.member.MemberService;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -21,12 +23,12 @@ public class OrderService {
         this.bookService = bookService;
     }
 
+    @Transactional
     public Order createOrder(Long memberId, Long bookId, int quantity) {
         memberService.findMember(memberId);
         Book book = bookService.findBook(bookId);
 
         Order order = new Order(
-            null,
             memberId,
             bookId,
             quantity,
@@ -44,6 +46,7 @@ public class OrderService {
         return orderRepository.findAll();
     }
 
+    @Transactional
     public Order cancelOrder(Long id) {
         Order order = findOrder(id);
         order.cancel();
