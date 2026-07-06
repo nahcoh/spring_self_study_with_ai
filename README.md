@@ -929,3 +929,306 @@ JpaBookRepository
 ```
 
 핵심 목표는 저장소 구현이 바뀌어도 Controller와 Service 흐름이 크게 흔들리지 않게 만드는 것이다.
+
+## JPA 전환
+
+기존에는 `MemoryRepository` 기반으로 데이터를 저장했지만, 이후 Spring Data JPA와 H2 Database를 적용하여 실제 데이터베이스 기반 구조로 전환했다.
+
+### 전환 목적
+
+- 메모리 저장소에서 DB 저장소로 구조 확장
+- Repository 인터페이스를 유지하면서 구현체만 교체하는 구조 경험
+- JPA 엔티티 매핑, 변경 감지, 트랜잭션 동작 학습
+- 통합 테스트를 통해 실제 DB 저장/조회/수정/삭제 검증
+
+---
+
+## 적용 기술
+
+- Spring Data JPA
+- H2 Database
+- Hibernate
+- JPQL
+- `@Transactional`
+- JPA Integration Test
+
+---
+
+## Repository 구조
+
+각 도메인은 Repository 인터페이스를 기준으로 동작한다.
+
+예시:
+
+```java
+public interface BookRepository {
+
+    Book save(Book book);
+
+    Optional<Book> findById(Long id);
+
+    List<Book> findAll();
+
+    List<Book> search(String title, Integer minPrice, Integer maxPrice);
+
+    void deleteById(Long id);
+
+    boolean existsById(Long id);
+}
+```
+
+기존 메모리 구현체는 테스트용으로 유지하고, 실제 애플리케이션 실행 시에는 Spring Data JPA 구현체가 주입되도록 변경했다.
+
+```java
+public interface JpaBookRepository extends JpaRepository<Book, Long>, BookRepository {
+}
+```
+
+이 구조를 통해 Service 계층은 구체적인 저장소 구현체에 의존하지 않고, Repository 인터페이스에만 의존한다.
+
+---
+
+## Entity 전환
+
+### Book
+
+`Book`은 JPA 엔티티로 전환되었고, `@Id`, `@GeneratedValue`를 사용하여 식별자를 자동 생성한다.
+
+```java
+@Entity
+@NoArgsConstructor
+@Getter
+public class Book {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String title;
+    private int price;
+}
+```
+
+### Member
+
+`Member`도 JPA 엔티티로 전환했다.
+
+이메일 중복 검사를 위해 `findByEmail`, `existsByEmail` 메서드를 JPA Repository에서 제공하도록 구성했다.
+
+```java
+Optional<Member> findByEmail(String email);
+
+boolean existsByEmail(String email);
+```
+
+### Order
+
+`Order`는 주문 상태를 enum으로 관리한다.
+
+```java
+@Enumerated(EnumType.STRING)
+private OrderStatus status;
+```
+
+`EnumType.STRING`을 사용하여 enum 순서 변경으로 인한 데이터 오류를 방지했다.
+
+또한 `Order`는 SQL 예약어와 충돌할 수 있으므로 테이블명을 `orders`로 지정했다.
+
+```java
+@Entity
+@Table(name = "orders")
+public class Order {
+}
+```
+
+---
+
+## JPQL 검색 기능
+
+Book, Member, Order는 각각 검색 조건에 따라 조회할 수 있도록 JPQL을 사용했다.
+
+### Book 검색
+
+```java
+@Query("""
+    select b from Book b
+    where (:title is null or :title = '' or b.title like concat('%', :title, '%'))
+    and (:minPrice is null or b.price >= :minPrice)
+    and (:maxPrice is null or b.price <= :maxPrice)
+    """)
+List<Book> search(String title, Integer minPrice, Integer maxPrice);
+```
+
+### Member 검색
+
+```java
+@Query("""
+    select m from Member m
+    where (:name is null or :name = '' or m.name like concat('%', :name, '%'))
+    and (:email is null or :email = '' or m.email like concat('%', :email, '%'))
+    """)
+List<Member> search(String name, String email);
+```
+
+### Order 검색
+
+```java
+@Query("""
+    select o from Order o
+    where (:memberId is null or o.memberId = :memberId)
+    and (:status is null or o.status = :status)
+    """)
+List<Order> search(Long memberId, OrderStatus status);
+```
+
+---
+
+## 트랜잭션과 변경 감지
+
+JPA에서는 엔티티 값을 변경할 때 트랜잭션 안에서 실행되어야 변경 감지가 동작한다.
+
+예를 들어 주문 취소 기능은 엔티티의 상태를 직접 변경한다.
+
+```java
+@Transactional
+public Order cancelOrder(Long id) {
+    Order order = findOrder(id);
+    order.cancel();
+    return order;
+}
+```
+
+`order.cancel()`을 호출하면 `Order` 엔티티의 상태가 `CANCELED`로 변경되고, 트랜잭션 커밋 시점에 DB에 반영된다.
+
+---
+
+## JPA 통합 테스트
+
+각 도메인별로 JPA 통합 테스트를 작성했다.
+
+### BookJpaIntegrationTest
+
+검증 내용:
+
+- 책 등록 시 DB 저장
+- 책 조회
+- 책 수정 시 변경 감지 동작
+- 책 삭제
+- 책 검색
+
+### MemberJpaIntegrationTest
+
+검증 내용:
+
+- 회원 등록 시 DB 저장
+- 회원 조회
+- 이메일 중복 등록 실패
+- 회원 수정 시 변경 감지 동작
+- 회원 삭제
+- 회원 검색
+
+### OrderJpaIntegrationTest
+
+검증 내용:
+
+- 주문 생성 시 DB 저장
+- 주문 조회
+- 없는 주문 조회 실패
+- 주문 취소 시 상태 변경
+- 취소된 주문 재취소 실패
+- memberId 검색
+- status 검색
+- memberId와 status 복합 검색
+
+---
+
+## JPA 전환 중 해결한 문제
+
+### 1. Repository 메서드 반환 타입 충돌
+
+`JpaRepository`와 직접 만든 Repository 인터페이스를 함께 상속할 때, 겹치는 메서드의 반환 타입이 다르면 충돌이 발생했다.
+
+예를 들어 `findById`, `findAll`은 `JpaRepository`와 반환 타입을 맞춰야 한다.
+
+```java
+Optional<Member> findById(Long id);
+
+List<Member> findAll();
+```
+
+---
+
+### 2. JPQL 문법 오류
+
+JPQL에서는 엔티티명을 기준으로 조회해야 한다.
+
+잘못된 예:
+
+```java
+select o from Order order o
+```
+
+올바른 예:
+
+```java
+select o from Order o
+```
+
+---
+
+### 3. SQL 예약어 충돌
+
+`Order`는 SQL 예약어와 충돌할 수 있기 때문에 테이블명을 `orders`로 변경했다.
+
+```java
+@Entity
+@Table(name = "orders")
+public class Order {
+}
+```
+
+---
+
+### 4. 변경 감지 미동작
+
+주문 취소 후 다시 조회했을 때 상태가 변경되지 않는 문제가 있었다.
+
+원인은 상태 변경 메서드에 트랜잭션이 적용되지 않았기 때문이었다.
+
+```java
+@Transactional
+public Order cancelOrder(Long id) {
+    Order order = findOrder(id);
+    order.cancel();
+    return order;
+}
+```
+
+트랜잭션을 적용한 후 JPA 변경 감지가 정상적으로 동작했다.
+
+---
+
+## 현재 프로젝트 상태
+
+- Book CRUD API 구현 완료
+- Member CRUD API 구현 완료
+- Order CRUD API 구현 완료
+- MemoryRepository 기반 구현 완료
+- JPA Repository 기반 전환 완료
+- JPQL 검색 기능 구현
+- Bean Validation 적용
+- GlobalExceptionHandler 적용
+- Controller 단위 테스트 작성
+- JPA 통합 테스트 작성
+
+---
+
+## 다음 개선 예정
+
+- Order와 Member, Book 간 JPA 연관관계 적용
+- `@ManyToOne` 기반 주문 구조 개선
+- DTO와 Entity 책임 분리 강화
+- API 응답 구조 개선
+- 페이징 기능 추가
+- 실제 MySQL 또는 PostgreSQL 연동
+- Docker 기반 DB 실행 환경 구성
