@@ -2,18 +2,21 @@ package com.example.mvccrud.book;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional(readOnly = true)
 @Service
 public class BookService {
 
-    private final BookRepository bookRepository;
+    private final JpaBookRepository bookRepository;
 
-    public BookService(BookRepository bookRepository) {
+    public BookService(JpaBookRepository bookRepository) {
         this.bookRepository = bookRepository;
     }
 
+    @Transactional
     public Book createBook(String title, int price) {
-        Book book = new Book(null, title, price);
+        Book book = new Book(title, price);
         return bookRepository.save(book);
     }
 
@@ -26,6 +29,7 @@ public class BookService {
         return bookRepository.findAll();
     }
 
+    @Transactional
     public Book updateBook(Long id, String title, int price) {
         Book book = findBook(id);
         book.changeTitle(title);
@@ -33,6 +37,7 @@ public class BookService {
         return book;
     }
 
+    @Transactional
     public void deleteBook(Long id) {
         if (!bookRepository.existsById(id)) {
             throw new BookNotFoundException();
@@ -40,6 +45,7 @@ public class BookService {
         bookRepository.deleteById(id);
     }
 
+    @Transactional
     public Book patchBook(Long id, String title, Integer price) {
         Book book = findBook(id);
 

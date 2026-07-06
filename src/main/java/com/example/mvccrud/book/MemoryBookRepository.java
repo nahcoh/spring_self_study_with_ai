@@ -8,7 +8,7 @@ import java.util.Optional;
 import javax.swing.text.html.Option;
 import org.springframework.stereotype.Repository;
 
-@Repository
+//@Repository
 public class MemoryBookRepository implements BookRepository {
 
     private final Map<Long, Book> store = new HashMap<>();
@@ -18,7 +18,7 @@ public class MemoryBookRepository implements BookRepository {
     @Override
     public Book save(Book book) {
         Long id = ++sequence;
-        Book savedBook = new Book(id, book.getTitle(), book.getPrice());
+        Book savedBook = new Book(book.getTitle(), book.getPrice());
         store.put(id, savedBook);
         return savedBook;
     }
