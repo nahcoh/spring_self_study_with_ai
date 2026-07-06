@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
-@Repository
+//@Repository
 public class MemoryMemberRepository implements MemberRepository{
 
     private final Map<Long, Member> store = new HashMap<>();
