@@ -27,6 +27,16 @@ public class Book {
         this.price = price;
     }
 
+     Book(Long id, String title, int price) {
+        validatePrice(price);
+        validateTitle(title);
+
+        this.id=id;
+        this.title = title;
+        this.price = price;
+
+    }
+
     public void changeTitle(String title) {
         validateTitle(title);
         this.title = title;

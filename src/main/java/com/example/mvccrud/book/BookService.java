@@ -8,9 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class BookService {
 
-    private final JpaBookRepository bookRepository;
+    private final BookRepository bookRepository;
 
-    public BookService(JpaBookRepository bookRepository) {
+    public BookService(BookRepository bookRepository) {
         this.bookRepository = bookRepository;
     }
 
