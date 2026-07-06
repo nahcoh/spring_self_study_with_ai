@@ -1,10 +1,15 @@
 package com.example.mvccrud.order;
 
+import com.example.mvccrud.book.Book;
+import com.example.mvccrud.member.Member;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,48 +23,55 @@ public class Order {
     @Id
     @GeneratedValue
     private Long id;
-    private Long memberId;
-    private Long bookId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
+
+    @ManyToOne(fetch =  FetchType.LAZY)
+    @JoinColumn(name = "book_id")
+    private Book book;
+
     private int quantity;
     private int orderPrice;
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
-    public Order(Long memberId, Long bookId, int quantity, int orderPrice) {
-        validateMemberId(memberId);
-        validateBookId(bookId);
+    public Order(Member member, Book book, int quantity, int orderPrice) {
+        validateMember(member);
+        validateBook(book);
         validateQuantity(quantity);
         validateOrderPrice(orderPrice);
 
-        this.memberId = memberId;
-        this.bookId = bookId;
+        this.member = member;
+        this.book = book;
         this.quantity = quantity;
         this.orderPrice = orderPrice;
         this.status = OrderStatus.ORDERED;
     }
 
-    Order(Long id, Long memberId, Long bookId, int quantity, int orderPrice) {
-        validateMemberId(memberId);
-        validateBookId(bookId);
+    Order(Long id, Member member, Book book, int quantity, int orderPrice) {
+        validateMember(member);
+        validateBook(book);
         validateQuantity(quantity);
         validateOrderPrice(orderPrice);
 
         this.id = id;
-        this.memberId = memberId;
-        this.bookId = bookId;
+        this.member = member;
+        this.book = book;
         this.quantity = quantity;
         this.orderPrice = orderPrice;
         this.status = OrderStatus.ORDERED;
     }
 
-    private void validateMemberId(Long memberId) {
-        if (memberId == null) {
-            throw new IllegalArgumentException("회원 ID는 필수입니다.");
+    private void validateMember(Member member) {
+        if (member == null) {
+            throw new IllegalArgumentException("회원은 필수입니다.");
         }
     }
-    private void validateBookId(Long bookId) {
-        if (bookId == null) {
-            throw new IllegalArgumentException("책 ID는 필수입니다.");
+    private void validateBook(Book book) {
+        if (book == null) {
+            throw new IllegalArgumentException("책은 필수입니다.");
             }
     }
 
@@ -85,6 +97,14 @@ public class Order {
 
     public int getTotalPrice() {
         return orderPrice * quantity;
+    }
+
+    public Long getMemberId() {
+        return member.getId();
+    }
+
+    public Long getBookId() {
+        return book.getId();
     }
 
 }

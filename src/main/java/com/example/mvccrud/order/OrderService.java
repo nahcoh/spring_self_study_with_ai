@@ -2,6 +2,7 @@ package com.example.mvccrud.order;
 
 import com.example.mvccrud.book.Book;
 import com.example.mvccrud.book.BookService;
+import com.example.mvccrud.member.Member;
 import com.example.mvccrud.member.MemberService;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -25,12 +26,12 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(Long memberId, Long bookId, int quantity) {
-        memberService.findMember(memberId);
+        Member member = memberService.findMember(memberId);
         Book book = bookService.findBook(bookId);
 
         Order order = new Order(
-            memberId,
-            bookId,
+            member,
+            book,
             quantity,
             book.getPrice()
         );

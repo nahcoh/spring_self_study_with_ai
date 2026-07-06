@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.springframework.stereotype.Repository;
 
 //@Repository
 public class MemoryOrderRepository implements OrderRepository {
@@ -19,8 +18,8 @@ public class MemoryOrderRepository implements OrderRepository {
 
         Order savedOrder = new Order(
             id,
-            order.getMemberId(),
-            order.getBookId(),
+            order.getMember(),
+            order.getBook(),
             order.getQuantity(),
             order.getOrderPrice()
         );

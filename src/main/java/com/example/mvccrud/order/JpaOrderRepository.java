@@ -9,7 +9,7 @@ public interface JpaOrderRepository extends JpaRepository<Order, Long>, OrderRep
 
     @Query("""
 select o from Order o
-where (:memberId is null or o.memberId =:memberId)
+where (:memberId is null or o.member.id = :memberId)
 and (:status is null or o.status =:status)
 """)
     List<Order> search(
