@@ -19,7 +19,7 @@ public class MemberPatchRequest {
     @Min(value = 1, message = "나이는 1 이상이어야 합니다.")
     private Integer age;
 
-    public MemberPatchRequest(String name, String email, int age) {
+    public MemberPatchRequest(String name, String email, Integer age) {
         this.name = name;
         this.email = email;
         this.age = age;
