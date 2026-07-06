@@ -2,6 +2,8 @@ package com.example.mvccrud.book;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface BookRepository {
 
@@ -10,6 +12,8 @@ public interface BookRepository {
     Optional<Book> findById(Long id);
 
     List<Book> findAll();
+
+    Page<Book> findAll(Pageable pageable);
 
     List<Book> search(String title, Integer minPrice, Integer maxPrice);
 

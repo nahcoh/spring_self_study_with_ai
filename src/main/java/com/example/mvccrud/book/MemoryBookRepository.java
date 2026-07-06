@@ -5,8 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.swing.text.html.Option;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 //@Repository
 public class MemoryBookRepository implements BookRepository {
@@ -50,6 +51,22 @@ public class MemoryBookRepository implements BookRepository {
             .filter(book -> minPrice == null || book.getPrice() >= minPrice)
             .filter(book -> maxPrice == null || book.getPrice() <= maxPrice)
             .toList();
+    }
+
+    @Override
+    public Page<Book> findAll(Pageable pageable) {
+        List<Book> books = new ArrayList<>(store.values());
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), books.size());
+
+        if (start >= books.size()) {
+            return new PageImpl<>(List.of(), pageable, books.size());
+        }
+
+        List<Book> pageContent = books.subList(start, end);
+
+        return new PageImpl<>(pageContent, pageable, books.size());
     }
 
 }

@@ -1,9 +1,11 @@
 package com.example.mvccrud.book;
 
-
 import com.example.mvccrud.global.ApiResponse;
+import com.example.mvccrud.global.PageResponse;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -46,12 +48,11 @@ public class BookController {
     }
 
     @GetMapping
-    public ApiResponse<List<BookResponse>> findBooks() {
-        List<BookResponse> books = bookService.findBooks().stream()
-            .map(BookResponse::new)
-            .toList();
+    public ApiResponse<PageResponse<BookResponse>> findBooks(Pageable pageable) {
+        Page<BookResponse> books = bookService.findBooks(pageable)
+            .map(BookResponse::new);
 
-        return ApiResponse.of(books);
+        return ApiResponse.of(PageResponse.from(books));
     }
 
     @PutMapping("/{id}")
