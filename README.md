@@ -14,6 +14,7 @@
 * HTTP Status Code 정리
 * PUT과 PATCH 차이 이해
 * Service Test, Controller Test 작성
+* 단순 CRUD와 행위 중심 API 차이 이해
 * 같은 구조를 여러 도메인에 반복 적용하기
 
 ---
@@ -61,6 +62,18 @@ com.example.mvccrud
  │   ├── MemberResponse
  │   ├── MemberNotFoundException
  │   └── DuplicateEmailException
+ │
+ ├── order
+ │   ├── Order
+ │   ├── OrderStatus
+ │   ├── OrderController
+ │   ├── OrderService
+ │   ├── OrderRepository
+ │   ├── MemoryOrderRepository
+ │   ├── OrderCreateRequest
+ │   ├── OrderSearchRequest
+ │   ├── OrderResponse
+ │   └── OrderNotFoundException
  │
  └── global
      ├── ApiResponse
@@ -147,20 +160,6 @@ GET /books/{id}
 
 ```http
 GET /books
-```
-
-응답 예시:
-
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "title": "데미안",
-      "price": 15000
-    }
-  ]
-}
 ```
 
 ---
@@ -321,21 +320,6 @@ GET /members/{id}
 GET /members
 ```
 
-응답 예시:
-
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "name": "김철수",
-      "email": "kim@test.com",
-      "age": 30
-    }
-  ]
-}
-```
-
 ---
 
 ### 회원 전체 수정
@@ -414,7 +398,170 @@ GET /members/search?name=김&email=test.com
 
 ---
 
-## 8. 계층 구조
+# Order API
+
+## 8. Order 도메인
+
+`Order`는 회원이 책을 주문한 정보를 표현하는 도메인 객체다.
+
+필드:
+
+```text
+id
+memberId
+bookId
+quantity
+orderPrice
+status
+```
+
+`OrderStatus`:
+
+```text
+ORDERED
+CANCELED
+```
+
+주요 기능:
+
+```text
+cancel()
+getTotalPrice()
+```
+
+검증 조건:
+
+* 회원 ID는 필수
+* 책 ID는 필수
+* 주문 수량은 1 이상
+* 주문 가격은 1원 이상
+* 이미 취소된 주문은 다시 취소할 수 없음
+
+---
+
+## 9. Order API 목록
+
+### 주문 생성
+
+```http
+POST /orders
+```
+
+요청 예시:
+
+```json
+{
+  "memberId": 1,
+  "bookId": 1,
+  "quantity": 2
+}
+```
+
+응답 예시:
+
+```http
+201 Created
+```
+
+```json
+{
+  "data": {
+    "id": 1,
+    "memberId": 1,
+    "bookId": 1,
+    "quantity": 2,
+    "orderPrice": 15000,
+    "totalPrice": 30000,
+    "status": "ORDERED"
+  }
+}
+```
+
+주문 생성 시 흐름:
+
+```text
+1. 회원 존재 여부 확인
+2. 책 존재 여부 확인
+3. 책 가격을 주문 가격으로 저장
+4. 주문 상태를 ORDERED로 생성
+5. 주문 저장
+```
+
+---
+
+### 주문 단건 조회
+
+```http
+GET /orders/{id}
+```
+
+응답 예시:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "memberId": 1,
+    "bookId": 1,
+    "quantity": 2,
+    "orderPrice": 15000,
+    "totalPrice": 30000,
+    "status": "ORDERED"
+  }
+}
+```
+
+---
+
+### 주문 전체 조회
+
+```http
+GET /orders
+```
+
+---
+
+### 주문 취소
+
+```http
+PATCH /orders/{id}/cancel
+```
+
+응답 예시:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "memberId": 1,
+    "bookId": 1,
+    "quantity": 2,
+    "orderPrice": 15000,
+    "totalPrice": 30000,
+    "status": "CANCELED"
+  }
+}
+```
+
+주문 취소는 단순 상태 변경이 아니라, `cancel()`이라는 의미 있는 행위 메서드로 처리한다.
+
+---
+
+### 주문 검색
+
+```http
+GET /orders/search?memberId=1
+GET /orders/search?status=ORDERED
+GET /orders/search?memberId=1&status=CANCELED
+```
+
+검색 조건은 없으면 무시하고, 있으면 해당 조건에 맞는 주문만 반환한다.
+
+---
+
+# 공통 구조
+
+## 10. 계층 구조
 
 ### Controller
 
@@ -444,6 +591,8 @@ HTTP 요청을 받는다.
 * 부분 수정
 * 삭제
 * 검색
+* 주문 생성
+* 주문 취소
 * 예외 처리
 
 ---
@@ -459,11 +608,12 @@ HTTP 요청을 받는다.
 ```text
 Map<Long, Book>
 Map<Long, Member>
+Map<Long, Order>
 ```
 
 ---
 
-## 9. DTO를 사용하는 이유
+## 11. DTO를 사용하는 이유
 
 API 요청과 응답에서 도메인 객체를 직접 사용하지 않기 위해 DTO를 사용한다.
 
@@ -483,11 +633,17 @@ API 요청과 응답에서 도메인 객체를 직접 사용하지 않기 위해
 * `MemberSearchRequest`
 * `MemberResponse`
 
+사용한 Order DTO:
+
+* `OrderCreateRequest`
+* `OrderSearchRequest`
+* `OrderResponse`
+
 DTO를 사용하면 API 스펙과 내부 도메인 모델을 분리할 수 있다.
 
 ---
 
-## 10. Validation
+## 12. Validation
 
 요청 값 검증에는 Bean Validation을 사용했다.
 
@@ -503,13 +659,16 @@ private String email;
 
 @Min(value = 1, message = "나이는 1 이상이어야 합니다.")
 private int age;
+
+@NotNull(message = "회원 ID는 필수입니다.")
+private Long memberId;
 ```
 
 잘못된 요청이 들어오면 `400 Bad Request`를 반환한다.
 
 ---
 
-## 11. 예외 처리
+## 13. 예외 처리
 
 공통 예외 처리를 위해 `GlobalExceptionHandler`를 사용했다.
 
@@ -517,15 +676,17 @@ private int age;
 
 * `BookNotFoundException`
 * `MemberNotFoundException`
+* `OrderNotFoundException`
 * `DuplicateEmailException`
 * `MethodArgumentNotValidException`
 * `IllegalArgumentException`
+* `IllegalStateException`
 
 ---
 
 ### 없는 리소스 조회
 
-없는 책 또는 회원을 조회하면 `404 Not Found`를 반환한다.
+없는 책, 회원, 주문을 조회하면 `404 Not Found`를 반환한다.
 
 예시:
 
@@ -540,6 +701,13 @@ private int age;
 {
   "status": 404,
   "message": "회원을 찾을 수 없습니다."
+}
+```
+
+```json
+{
+  "status": 404,
+  "message": "주문을 찾을 수 없습니다."
 }
 ```
 
@@ -580,7 +748,22 @@ private int age;
 
 ---
 
-## 12. 테스트
+### 잘못된 상태 변경
+
+이미 취소된 주문을 다시 취소하려 하면 `400 Bad Request`를 반환한다.
+
+예시:
+
+```json
+{
+  "status": 400,
+  "message": "이미 취소된 주문입니다."
+}
+```
+
+---
+
+## 14. 테스트
 
 ### Book Service Test
 
@@ -660,7 +843,44 @@ private int age;
 
 ---
 
-## 13. 현재까지 배운 핵심
+### Order Service Test
+
+`OrderServiceTest`에서 다음 기능을 검증했다.
+
+* 주문 생성
+* 없는 회원으로 주문 생성 실패
+* 없는 책으로 주문 생성 실패
+* 주문 단건 조회
+* 없는 주문 조회 실패
+* 주문 전체 조회
+* 주문 취소
+* 이미 취소된 주문 다시 취소 실패
+* 회원 ID로 주문 검색
+* 상태로 주문 검색
+* 회원 ID + 상태로 주문 검색
+
+---
+
+### Order Controller Test
+
+`OrderControllerTest`에서 MockMvc를 사용해 API 요청/응답을 검증했다.
+
+검증한 내용:
+
+* `POST /orders` → 201 Created
+* 주문 생성 검증 실패 → 400 Bad Request
+* 없는 회원으로 주문 생성 → 404 Not Found
+* 없는 책으로 주문 생성 → 404 Not Found
+* `GET /orders/{id}` → 200 OK
+* 없는 주문 조회 → 404 Not Found
+* `GET /orders` → 200 OK
+* `PATCH /orders/{id}/cancel` → 200 OK
+* 이미 취소된 주문 다시 취소 → 400 Bad Request
+* 주문 검색 API → 200 OK
+
+---
+
+## 15. 현재까지 배운 핵심
 
 * Spring MVC REST API 기본 흐름
 * Controller / Service / Repository 역할 분리
@@ -671,35 +891,41 @@ private int age;
 * PUT과 PATCH의 차이
 * Stream filter를 활용한 검색
 * 이메일 중복 검사 로직
+* 단순 CRUD와 행위 API의 차이
+* 주문 생성 시 다른 도메인 존재 확인
+* 주문 취소 상태 변경
 * Service 단위 테스트
 * MockMvc 기반 Controller 테스트
-* 같은 구조를 다른 도메인에 반복 적용하기
+* 같은 구조를 여러 도메인에 반복 적용하기
 
 ---
 
-## 14. 다음 목표
+## 16. 다음 목표
 
-다음 단계에서는 단순 CRUD를 넘어서 관계가 있는 도메인을 연습한다.
+다음 단계에서는 현재 메모리 저장소 기반 구조를 JPA 기반으로 전환한다.
 
-예정 도메인:
+우선 전환 대상:
 
 ```text
-Order
+Book
 ```
 
 목표:
 
-* Member와 Book을 참조하는 주문 도메인 만들기
-* 단순 CRUD가 아니라 주문 생성, 주문 취소 같은 행위 API 만들기
-* 상태값 관리 연습
-* JPA 연관관계에 들어가기 전 메모리 기반으로 관계 구조 이해하기
+* H2 Database 추가
+* Spring Data JPA 추가
+* `Book`을 JPA Entity로 변경
+* `MemoryBookRepository`를 JPA 기반 Repository로 교체
+* 기존 Controller / Service 구조를 최대한 유지
+* 기존 테스트를 JPA 환경에 맞게 조정
+* 계층 분리의 장점 체감하기
 
-예정 API:
+예상 흐름:
 
-```http
-POST /orders
-GET /orders/{id}
-GET /orders
-PATCH /orders/{id}/cancel
-GET /orders/search?memberId=1&status=ORDERED
+```text
+MemoryBookRepository
+↓
+JpaBookRepository
 ```
+
+핵심 목표는 저장소 구현이 바뀌어도 Controller와 Service 흐름이 크게 흔들리지 않게 만드는 것이다.
