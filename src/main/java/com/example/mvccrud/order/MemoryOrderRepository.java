@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 //@Repository
 public class MemoryOrderRepository implements OrderRepository {
@@ -36,6 +39,22 @@ public class MemoryOrderRepository implements OrderRepository {
     @Override
     public List<Order> findAll() {
         return new ArrayList<>(store.values());
+    }
+
+    @Override
+    public Page<Order> findAll(Pageable pageable) {
+        List<Order> orders = new ArrayList<>(store.values());
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), orders.size());
+
+        if (start >= orders.size()) {
+            return new PageImpl<>(List.of(), pageable, orders.size());
+        }
+
+        List<Order> pageContent = orders.subList(start, end);
+
+        return new PageImpl<>(pageContent, pageable, orders.size());
     }
 
     @Override

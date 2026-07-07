@@ -1,8 +1,11 @@
 package com.example.mvccrud.order;
 
 import com.example.mvccrud.global.ApiResponse;
+import com.example.mvccrud.global.PageResponse;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -50,12 +53,11 @@ public class OrderController {
     }
 
     @GetMapping
-    public ApiResponse<List<OrderResponse>> findOrders() {
-        List<OrderResponse> orders = orderService.findOrders().stream()
-            .map(OrderResponse::new)
-            .toList();
+    public ApiResponse<PageResponse<OrderResponse>> findOrders(Pageable pageable) {
+        Page<OrderResponse> orders = orderService.findOrders(pageable)
+            .map(OrderResponse::new);
 
-        return ApiResponse.of(orders);
+        return ApiResponse.of(PageResponse.from(orders));
     }
 
     @PatchMapping("/{id}/cancel")

@@ -5,6 +5,8 @@ import com.example.mvccrud.book.BookService;
 import com.example.mvccrud.member.Member;
 import com.example.mvccrud.member.MemberService;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +47,10 @@ public class OrderService {
 
     public List<Order> findOrders() {
         return orderRepository.findAll();
+    }
+
+    public Page<Order> findOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable);
     }
 
     @Transactional

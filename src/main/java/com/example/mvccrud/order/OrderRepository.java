@@ -2,6 +2,8 @@ package com.example.mvccrud.order;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface OrderRepository {
 
@@ -10,6 +12,8 @@ public interface OrderRepository {
     Optional<Order> findById(Long id);
 
     List<Order> findAll();
+
+    Page<Order> findAll(Pageable pageable);
 
     List<Order> search(Long memberId, OrderStatus status);
 
