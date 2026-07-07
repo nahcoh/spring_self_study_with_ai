@@ -68,6 +68,10 @@ public class BookService {
         return bookRepository.search(title, minPrice, maxPrice);
     }
 
+    public Page<Book> searchBooks(String title, Integer minPrice, Integer maxPrice,
+        Pageable pageable) {
+        return bookRepository.search(title, minPrice, maxPrice, pageable);
+    }
 
 
 }

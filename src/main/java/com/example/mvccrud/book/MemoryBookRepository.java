@@ -69,4 +69,20 @@ public class MemoryBookRepository implements BookRepository {
         return new PageImpl<>(pageContent, pageable, books.size());
     }
 
+    @Override
+    public Page<Book> search(String title, Integer minPrice, Integer maxPrice, Pageable pageable) {
+        List<Book> books = search(title, minPrice, maxPrice);
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), books.size());
+
+        if (start >= books.size()) {
+            return new PageImpl<>(List.of(), pageable, books.size());
+        }
+
+        List<Book> pageContent = books.subList(start, end);
+
+        return new PageImpl<>(pageContent, pageable, books.size());
+    }
+
 }

@@ -81,15 +81,16 @@ public class BookController {
     }
 
     @GetMapping("/search")
-    public ApiResponse<List<BookResponse>> searchBooks(@ModelAttribute BookSearchRequest request) {
-        List<BookResponse> books = bookService.searchBooks(
-                request.getTitle(),
-                request.getMinPrice(),
-                request.getMaxPrice()
-            ).stream()
-            .map(BookResponse::new)
-            .toList();
+    public ApiResponse<PageResponse<BookResponse>> searchBooks(
+        @ModelAttribute BookSearchRequest request
+        , Pageable pageable) {
 
-        return ApiResponse.of(books);
+        Page<BookResponse> books = bookService.searchBooks(
+            request.getTitle(),
+            request.getMinPrice(),
+            request.getMaxPrice(),
+            pageable).map(BookResponse::new);
+
+        return ApiResponse.of(PageResponse.from(books));
     }
 }
