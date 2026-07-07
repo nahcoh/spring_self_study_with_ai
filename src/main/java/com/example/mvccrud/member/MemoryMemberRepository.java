@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 //@Repository
@@ -43,6 +46,22 @@ public class MemoryMemberRepository implements MemberRepository{
     @Override
     public List<Member> findAll() {
         return new ArrayList<>(store.values());
+    }
+
+    @Override
+    public Page<Member> findAll(Pageable pageable) {
+        List<Member> members = new ArrayList<>(store.values());
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), members.size());
+
+        if (start >= members.size()) {
+            return new PageImpl<>(List.of(), pageable, members.size());
+        }
+
+        List<Member> pageContent = members.subList(start, end);
+
+        return new PageImpl<>(pageContent, pageable, members.size());
     }
 
     @Override

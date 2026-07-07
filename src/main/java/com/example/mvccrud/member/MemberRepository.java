@@ -2,6 +2,8 @@ package com.example.mvccrud.member;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface MemberRepository {
 
@@ -12,6 +14,8 @@ public interface MemberRepository {
     Optional<Member> findByEmail(String email);
 
     List<Member> findAll();
+
+    Page<Member> findAll(Pageable pageable);
 
     List<Member> search(String name, String email);
 

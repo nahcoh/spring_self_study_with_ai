@@ -1,6 +1,8 @@
 package com.example.mvccrud.member;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,6 +29,10 @@ public class MemberService {
 
     public List<Member> findMembers() {
         return memberRepository.findAll();
+    }
+
+    public Page<Member> findMembers(Pageable pageable) {
+        return memberRepository.findAll(pageable);
     }
 
     public Member updateMember(Long id, String name, String email, int age) {

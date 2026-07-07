@@ -1,8 +1,11 @@
 package com.example.mvccrud.member;
 
 import com.example.mvccrud.global.ApiResponse;
+import com.example.mvccrud.global.PageResponse;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -50,11 +53,13 @@ public class MemberController {
 
 
     @GetMapping
-    public ApiResponse<List<MemberResponse>> findMembers() {
-        List<MemberResponse> members = memberService.findMembers().stream()
-            .map(MemberResponse::new)
-            .toList();
-        return ApiResponse.of(members);
+    public ApiResponse<PageResponse<MemberResponse>> findMembers(
+        Pageable pageable
+    ) {
+
+        Page<MemberResponse> members = memberService.findMembers(pageable)
+            .map(MemberResponse::new);
+        return ApiResponse.of(PageResponse.from(members));
     }
 
 
