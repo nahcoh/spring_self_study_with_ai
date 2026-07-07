@@ -64,4 +64,8 @@ public class OrderService {
         return orderRepository.search(memberId, status);
     }
 
+    public Page<Order> searchOrders(Long memberId, OrderStatus status, Pageable pageable) {
+        return orderRepository.search(memberId, status, pageable);
+    }
+
 }

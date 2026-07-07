@@ -17,6 +17,8 @@ public interface OrderRepository {
 
     List<Order> search(Long memberId, OrderStatus status);
 
+    Page<Order> search(Long memberId, OrderStatus status, Pageable pageable);
+
     boolean existsById(Long id);
 
 

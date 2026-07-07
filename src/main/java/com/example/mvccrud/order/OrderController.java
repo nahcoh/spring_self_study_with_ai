@@ -67,15 +67,16 @@ public class OrderController {
     }
 
     @GetMapping("/search")
-    public ApiResponse<List<OrderResponse>> searchOrders(
-        @ModelAttribute OrderSearchRequest request) {
-        List<OrderResponse> orders = orderService.searchOrders(
+    public ApiResponse<PageResponse<OrderResponse>> searchOrders(
+        @ModelAttribute OrderSearchRequest request, Pageable pageable) {
+        Page<OrderResponse> orders = orderService.searchOrders(
                 request.getMemberId(),
-                request.getStatus()
-            ).stream()
-            .map(OrderResponse::new)
-            .toList();
-        return ApiResponse.of(orders);
+                request.getStatus(),
+                pageable
+            )
+            .map(OrderResponse::new);
+
+        return ApiResponse.of(PageResponse.from(orders));
     }
 
 }

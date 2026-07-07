@@ -66,6 +66,22 @@ public class MemoryOrderRepository implements OrderRepository {
     }
 
     @Override
+    public Page<Order> search(Long memberId, OrderStatus status, Pageable pageable) {
+        List<Order> orders = new ArrayList<>(store.values());
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), orders.size());
+
+        if (start >= orders.size()) {
+            return new PageImpl<>(List.of(), pageable, orders.size());
+        }
+
+        List<Order> pageContent = orders.subList(start, end);
+
+        return new PageImpl<>(pageContent, pageable, orders.size());
+    }
+
+    @Override
     public boolean existsById(Long id) {
         return store.containsKey(id);
     }

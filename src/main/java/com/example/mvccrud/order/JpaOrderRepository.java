@@ -1,6 +1,8 @@
 package com.example.mvccrud.order;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +17,17 @@ and (:status is null or o.status =:status)
     List<Order> search(
         @Param("memberId") Long memberId,
         @Param("status") OrderStatus status
+    );
+
+    @Query("""
+        select o from Order o
+        where (:memberId is null or o.member.id = :memberId)
+        and (:status is null or o.status = :status)
+        """)
+    Page<Order> search(
+        @Param("memberId") Long memberId,
+        @Param("status") OrderStatus status,
+        Pageable pageable
     );
 
 }
