@@ -19,6 +19,8 @@ public interface MemberRepository {
 
     List<Member> search(String name, String email);
 
+    Page<Member> search(String name, String email, Pageable pageable);
+
     boolean existsById(Long id);
 
     boolean existsByEmail(String email);

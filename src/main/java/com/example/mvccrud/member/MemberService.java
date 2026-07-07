@@ -78,4 +78,8 @@ public class MemberService {
         return memberRepository.search(name, email);
     }
 
+    public Page<Member> searchMembers(String name, String email, Pageable pageable) {
+        return memberRepository.search(name, email, pageable);
+    }
+    
 }

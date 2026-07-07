@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.boot.json.JsonWriter.Members;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -70,6 +71,22 @@ public class MemoryMemberRepository implements MemberRepository{
             .filter(member -> name == null || name.isBlank() || member.getName().contains(name))
             .filter(member -> email == null || email.isBlank() || member.getEmail().contains(email))
             .toList();
+    }
+
+    @Override
+    public Page<Member> search(String name, String email, Pageable pageable) {
+        List<Member> members = search(name, email);
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), members.size());
+
+        if (start >= members.size()) {
+            return new PageImpl<>(List.of(), pageable, members.size());
+        }
+
+        List<Member> pageContent = members.subList(start, end);
+
+        return new PageImpl<>(pageContent, pageable, members.size());
     }
 
     @Override

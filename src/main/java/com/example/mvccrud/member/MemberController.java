@@ -91,16 +91,17 @@ public class MemberController {
     }
 
     @GetMapping("/search")
-    public ApiResponse<List<MemberResponse>> searchMembers(
-        @ModelAttribute MemberSearchRequest request) {
+    public ApiResponse<PageResponse<MemberResponse>> searchMembers(
+        @ModelAttribute MemberSearchRequest request,
+        Pageable pageable) {
 
-        List<MemberResponse> members = memberService.searchMembers(
-                request.getName(),
-                request.getEmail()
-            ).stream().map(MemberResponse::new)
-            .toList();
+        Page<MemberResponse> members = memberService.searchMembers(
+            request.getName(),
+            request.getEmail(),
+            pageable
+        ).map(MemberResponse::new);
 
-        return ApiResponse.of(members);
+        return ApiResponse.of(PageResponse.from(members));
     }
 
 
