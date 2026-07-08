@@ -1,38 +1,95 @@
 # Spring MVC CRUD Practice
 
+Spring MVC 기반의 CRUD REST API를 직접 구현하면서 백엔드 기본 구조를 연습한 프로젝트다.
+
+처음에는 `MemoryRepository` 기반으로 시작했고, 이후 Spring Data JPA와 H2 Database를 적용하여 실제 DB 기반 구조로 전환했다.  
+현재는 Book, Member, Order 도메인에 대해 CRUD, 검색, 페이징, 정렬, 예외 처리, Validation, 테스트까지 적용되어 있다.
+
+---
+
 ## 1. 프로젝트 목표
 
-이 프로젝트는 JPA 없이 메모리 저장소를 사용해서 Spring MVC 기반 REST API 구조를 연습하는 프로젝트다.
+이 프로젝트의 목표는 단순히 CRUD API를 만드는 것이 아니라, Spring 백엔드 애플리케이션의 기본 흐름을 직접 구현하며 체화하는 것이다.
 
-목표는 다음과 같다.
+주요 학습 목표는 다음과 같다.
 
-* Controller, Service, Repository 계층 구조 이해
-* REST API 요청/응답 흐름 이해
-* Request DTO, Response DTO 분리
-* Validation 적용
-* Global Exception Handling 적용
-* HTTP Status Code 정리
-* PUT과 PATCH 차이 이해
-* Service Test, Controller Test 작성
-* 단순 CRUD와 행위 중심 API 차이 이해
-* 같은 구조를 여러 도메인에 반복 적용하기
+- Controller, Service, Repository 계층 구조 이해
+- REST API 요청/응답 흐름 이해
+- Request DTO, Response DTO 분리
+- 공통 응답 구조 적용
+- Bean Validation 적용
+- Global Exception Handling 적용
+- HTTP Status Code 정리
+- PUT과 PATCH 차이 이해
+- MemoryRepository에서 JPA Repository로 전환
+- JPA Entity 매핑
+- JPA 변경 감지와 트랜잭션 이해
+- `@ManyToOne` 연관관계 적용
+- JPQL 검색 기능 구현
+- Pageable 기반 페이징/정렬 구현
+- Service Test, Controller Test, JPA Integration Test 작성
 
 ---
 
 ## 2. 기술 스택
 
-* Java 17
-* Spring Boot
-* Spring Web
-* Validation
-* Lombok
-* JUnit 5
-* AssertJ
-* MockMvc
+- Java 17
+- Spring Boot
+- Spring Web MVC
+- Spring Data JPA
+- H2 Database
+- Hibernate
+- Bean Validation
+- Lombok
+- JUnit 5
+- AssertJ
+- MockMvc
+- Gradle
 
 ---
 
-## 3. 패키지 구조
+## 3. 주요 기능
+
+### Book
+
+- 책 등록
+- 책 단건 조회
+- 책 목록 조회
+- 책 수정
+- 책 부분 수정
+- 책 삭제
+- 책 검색
+- 책 목록 페이징/정렬
+- 책 검색 결과 페이징/정렬
+
+### Member
+
+- 회원 등록
+- 회원 단건 조회
+- 회원 목록 조회
+- 회원 수정
+- 회원 부분 수정
+- 회원 삭제
+- 이메일 중복 검사
+- 회원 검색
+- 회원 목록 페이징/정렬
+- 회원 검색 결과 페이징/정렬
+
+### Order
+
+- 주문 생성
+- 주문 단건 조회
+- 주문 목록 조회
+- 주문 취소
+- 취소된 주문 재취소 방지
+- 주문 검색
+- 주문 목록 페이징/정렬
+- 주문 검색 결과 페이징/정렬
+- Member, Book과 `@ManyToOne` 연관관계 적용
+
+---
+
+## 4. 패키지 구조
 
 ```text
 com.example.mvccrud
@@ -41,6 +98,7 @@ com.example.mvccrud
  │   ├── BookController
  │   ├── BookService
  │   ├── BookRepository
+ │   ├── JpaBookRepository
  │   ├── MemoryBookRepository
  │   ├── BookCreateRequest
  │   ├── BookUpdateRequest
@@ -54,6 +112,7 @@ com.example.mvccrud
  │   ├── MemberController
  │   ├── MemberService
  │   ├── MemberRepository
+ │   ├── JpaMemberRepository
  │   ├── MemoryMemberRepository
  │   ├── MemberCreateRequest
  │   ├── MemberUpdateRequest
@@ -69,25 +128,98 @@ com.example.mvccrud
  │   ├── OrderController
  │   ├── OrderService
  │   ├── OrderRepository
+ │   ├── JpaOrderRepository
  │   ├── MemoryOrderRepository
  │   ├── OrderCreateRequest
  │   ├── OrderSearchRequest
  │   ├── OrderResponse
  │   └── OrderNotFoundException
  │
- └── global
-     ├── ApiResponse
-     ├── ErrorResponse
-     └── GlobalExceptionHandler
+ ├── global
+ │   ├── ApiResponse
+ │   ├── PageResponse
+ │   ├── ErrorResponse
+ │   └── GlobalExceptionHandler
+ │
+ └── common
+     └── DataInitializer
+```
+
+---
+
+## 5. 실행 방법
+
+### 기본 테스트 실행
+
+```bash
+./gradlew test
+```
+
+### dev 프로필로 서버 실행
+
+```bash
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
+```
+
+dev 프로필에서는 H2 파일 DB를 사용한다.
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/mvc-crud
+```
+
+서버를 재시작해도 데이터가 유지된다.
+
+---
+
+## 6. H2 Console
+
+dev 프로필로 서버를 실행한 뒤 아래 주소로 접속한다.
+
+```text
+http://localhost:8080/h2-console
+```
+
+접속 정보:
+
+```text
+Driver Class: org.h2.Driver
+JDBC URL: jdbc:h2:file:./data/mvc-crud
+User Name: sa
+Password:
+```
+
+비밀번호는 비워둔다.
+
+---
+
+## 7. 더미 데이터
+
+dev 프로필에서는 `DataInitializer`를 통해 더미 데이터를 자동으로 삽입한다.
+
+예시 데이터:
+
+- 회원 5명
+- 책 10권
+- 주문 10건
+- 일부 주문은 `CANCELED` 상태
+
+중복 삽입 방지를 위해 기존 회원 데이터가 있으면 더미 데이터를 다시 넣지 않는다.
+
+```java
+if (!memberService.findMembers().isEmpty()) {
+    return;
+}
 ```
 
 ---
 
 # Book API
 
-## 4. Book 도메인
+## 8. Book 도메인
 
-`Book`은 책 정보를 표현하는 도메인 객체다.
+`Book`은 책 정보를 표현하는 도메인이다.
 
 필드:
 
@@ -106,12 +238,12 @@ changePrice()
 
 검증 조건:
 
-* 제목은 필수
-* 가격은 1원 이상
+- 제목은 필수
+- 가격은 1원 이상
 
 ---
 
-## 5. Book API 목록
+## 9. Book API 목록
 
 ### 책 등록
 
@@ -132,6 +264,18 @@ POST /books
 
 ```http
 201 Created
+```
+
+응답 예시:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "title": "데미안",
+    "price": 15000
+  }
+}
 ```
 
 ---
@@ -156,10 +300,39 @@ GET /books/{id}
 
 ---
 
-### 책 전체 조회
+### 책 목록 조회
 
 ```http
-GET /books
+GET /books?page=0&size=5
+```
+
+정렬 예시:
+
+```http
+GET /books?page=0&size=5&sort=price,desc
+GET /books?page=0&size=5&sort=title,asc
+```
+
+응답 예시:
+
+```json
+{
+  "data": {
+    "content": [
+      {
+        "id": 1,
+        "title": "데미안",
+        "price": 15000
+      }
+    ],
+    "page": 0,
+    "size": 5,
+    "totalElements": 10,
+    "totalPages": 2,
+    "first": true,
+    "last": false
+  }
+}
 ```
 
 ---
@@ -226,9 +399,15 @@ DELETE /books/{id}
 ### 책 검색
 
 ```http
-GET /books/search?title=자바
-GET /books/search?minPrice=10000&maxPrice=30000
-GET /books/search?title=자바&minPrice=10000&maxPrice=30000
+GET /books/search?title=자바&page=0&size=5
+GET /books/search?minPrice=10000&maxPrice=30000&page=0&size=5
+GET /books/search?title=자바&minPrice=10000&maxPrice=30000&page=0&size=5
+```
+
+정렬 예시:
+
+```http
+GET /books/search?minPrice=20000&maxPrice=40000&page=0&size=5&sort=price,desc
 ```
 
 검색 조건은 없으면 무시하고, 있으면 해당 조건에 맞는 책만 반환한다.
@@ -237,9 +416,9 @@ GET /books/search?title=자바&minPrice=10000&maxPrice=30000
 
 # Member API
 
-## 6. Member 도메인
+## 10. Member 도메인
 
-`Member`는 회원 정보를 표현하는 도메인 객체다.
+`Member`는 회원 정보를 표현하는 도메인이다.
 
 필드:
 
@@ -260,14 +439,15 @@ changeAge()
 
 검증 조건:
 
-* 이름은 필수
-* 이메일은 필수
-* 나이는 1 이상
-* 이메일은 중복될 수 없음
+- 이름은 필수
+- 이메일은 필수
+- 이메일 형식 검증
+- 나이는 1 이상
+- 이메일은 중복될 수 없음
 
 ---
 
-## 7. Member API 목록
+## 11. Member API 목록
 
 ### 회원 등록
 
@@ -289,6 +469,19 @@ POST /members
 
 ```http
 201 Created
+```
+
+응답 예시:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "name": "김철수",
+    "email": "kim@test.com",
+    "age": 30
+  }
+}
 ```
 
 ---
@@ -314,10 +507,17 @@ GET /members/{id}
 
 ---
 
-### 회원 전체 조회
+### 회원 목록 조회
 
 ```http
-GET /members
+GET /members?page=0&size=5
+```
+
+정렬 예시:
+
+```http
+GET /members?page=0&size=5&sort=age,desc
+GET /members?page=0&size=5&sort=name,asc
 ```
 
 ---
@@ -389,9 +589,15 @@ DELETE /members/{id}
 ### 회원 검색
 
 ```http
-GET /members/search?name=김
-GET /members/search?email=test.com
-GET /members/search?name=김&email=test.com
+GET /members/search?name=김&page=0&size=5
+GET /members/search?email=test.com&page=0&size=5
+GET /members/search?name=김&email=test.com&page=0&size=5
+```
+
+정렬 예시:
+
+```http
+GET /members/search?name=김&page=0&size=5&sort=age,desc
 ```
 
 검색 조건은 없으면 무시하고, 있으면 해당 조건에 맞는 회원만 반환한다.
@@ -400,20 +606,24 @@ GET /members/search?name=김&email=test.com
 
 # Order API
 
-## 8. Order 도메인
+## 12. Order 도메인
 
-`Order`는 회원이 책을 주문한 정보를 표현하는 도메인 객체다.
+`Order`는 회원이 책을 주문한 정보를 표현하는 도메인이다.
+
+현재 구조에서 주문 1개는 회원 1명이 책 1종류를 수량 N개 주문한 기록을 의미한다.
 
 필드:
 
 ```text
 id
-memberId
-bookId
+member
+book
 quantity
 orderPrice
 status
 ```
+
+응답에서는 편의를 위해 `memberId`, `bookId`를 반환한다.
 
 `OrderStatus`:
 
@@ -427,19 +637,49 @@ CANCELED
 ```text
 cancel()
 getTotalPrice()
+getMemberId()
+getBookId()
 ```
 
 검증 조건:
 
-* 회원 ID는 필수
-* 책 ID는 필수
-* 주문 수량은 1 이상
-* 주문 가격은 1원 이상
-* 이미 취소된 주문은 다시 취소할 수 없음
+- 회원은 필수
+- 책은 필수
+- 주문 수량은 1 이상
+- 주문 가격은 1원 이상
+- 이미 취소된 주문은 다시 취소할 수 없음
 
 ---
 
-## 9. Order API 목록
+## 13. Order 연관관계
+
+`Order`는 `Member`, `Book`과 다대일 관계를 가진다.
+
+```java
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "member_id")
+private Member member;
+
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "book_id")
+private Book book;
+```
+
+관계 의미:
+
+```text
+Member 1명 → Order 여러 개
+Book 1권 → Order 여러 개
+Order 1개 → Member 1명
+Order 1개 → Book 1권
+```
+
+현재 프로젝트에서는 주문 하나가 책 한 종류만 담는 단순 구조다.  
+실무처럼 주문 하나에 여러 책을 담으려면 `OrderItem` 중간 엔티티를 추가하는 구조가 더 적합하다.
+
+---
+
+## 14. Order API 목록
 
 ### 주문 생성
 
@@ -457,11 +697,13 @@ POST /orders
 }
 ```
 
-응답 예시:
+응답:
 
 ```http
 201 Created
 ```
+
+응답 예시:
 
 ```json
 {
@@ -477,7 +719,7 @@ POST /orders
 }
 ```
 
-주문 생성 시 흐름:
+주문 생성 흐름:
 
 ```text
 1. 회원 존재 여부 확인
@@ -513,10 +755,17 @@ GET /orders/{id}
 
 ---
 
-### 주문 전체 조회
+### 주문 목록 조회
 
 ```http
-GET /orders
+GET /orders?page=0&size=5
+```
+
+정렬 예시:
+
+```http
+GET /orders?page=0&size=5&sort=quantity,desc
+GET /orders?page=0&size=5&sort=orderPrice,desc
 ```
 
 ---
@@ -543,16 +792,16 @@ PATCH /orders/{id}/cancel
 }
 ```
 
-주문 취소는 단순 상태 변경이 아니라, `cancel()`이라는 의미 있는 행위 메서드로 처리한다.
+주문 취소는 단순 필드 변경이 아니라 `cancel()`이라는 행위 메서드로 처리한다.
 
 ---
 
 ### 주문 검색
 
 ```http
-GET /orders/search?memberId=1
-GET /orders/search?status=ORDERED
-GET /orders/search?memberId=1&status=CANCELED
+GET /orders/search?memberId=1&page=0&size=5
+GET /orders/search?status=ORDERED&page=0&size=5
+GET /orders/search?memberId=1&status=CANCELED&page=0&size=5
 ```
 
 검색 조건은 없으면 무시하고, 있으면 해당 조건에 맞는 주문만 반환한다.
@@ -561,7 +810,70 @@ GET /orders/search?memberId=1&status=CANCELED
 
 # 공통 구조
 
-## 10. 계층 구조
+## 15. 공통 응답 구조
+
+성공 응답은 `ApiResponse<T>`로 감싼다.
+
+```json
+{
+  "data": {
+    "id": 1,
+    "title": "데미안",
+    "price": 15000
+  }
+}
+```
+
+목록과 검색 결과는 페이징 응답으로 반환한다.
+
+```json
+{
+  "data": {
+    "content": [],
+    "page": 0,
+    "size": 5,
+    "totalElements": 10,
+    "totalPages": 2,
+    "first": true,
+    "last": false
+  }
+}
+```
+
+---
+
+## 16. PageResponse
+
+페이징 응답은 `PageResponse<T>`로 통일했다.
+
+```java
+public record PageResponse<T>(
+        List<T> content,
+        int page,
+        int size,
+        long totalElements,
+        int totalPages,
+        boolean first,
+        boolean last
+) {
+
+    public static <T> PageResponse<T> from(Page<T> page) {
+        return new PageResponse<>(
+                page.getContent(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isFirst(),
+                page.isLast()
+        );
+    }
+}
+```
+
+---
+
+## 17. 계층 구조
 
 ### Controller
 
@@ -569,12 +881,13 @@ HTTP 요청을 받는다.
 
 역할:
 
-* URL 매핑
-* Request DTO 받기
-* Validation 적용
-* Service 호출
-* Response DTO 반환
-* HTTP Status Code 반환
+- URL 매핑
+- Request DTO 받기
+- Validation 적용
+- Pageable 요청 받기
+- Service 호출
+- Response DTO 반환
+- HTTP Status Code 반환
 
 ---
 
@@ -584,16 +897,18 @@ HTTP 요청을 받는다.
 
 역할:
 
-* 등록
-* 조회
-* 전체 조회
-* 수정
-* 부분 수정
-* 삭제
-* 검색
-* 주문 생성
-* 주문 취소
-* 예외 처리
+- 등록
+- 조회
+- 목록 조회
+- 수정
+- 부분 수정
+- 삭제
+- 검색
+- 페이징 조회
+- 주문 생성
+- 주문 취소
+- 예외 처리
+- 트랜잭션 관리
 
 ---
 
@@ -601,49 +916,57 @@ HTTP 요청을 받는다.
 
 저장소 역할을 담당한다.
 
-현재는 DB를 사용하지 않고 `Map` 기반 메모리 저장소를 사용한다.
+현재는 Repository 인터페이스를 기준으로 Service가 의존하고, 실제 애플리케이션 실행 시에는 Spring Data JPA 구현체가 주입된다.
 
-예:
+메모리 구현체는 테스트용으로 유지한다.
 
 ```text
-Map<Long, Book>
-Map<Long, Member>
-Map<Long, Order>
+BookRepository
+ ├── JpaBookRepository
+ └── MemoryBookRepository
+
+MemberRepository
+ ├── JpaMemberRepository
+ └── MemoryMemberRepository
+
+OrderRepository
+ ├── JpaOrderRepository
+ └── MemoryOrderRepository
 ```
 
 ---
 
-## 11. DTO를 사용하는 이유
+## 18. DTO를 사용하는 이유
 
-API 요청과 응답에서 도메인 객체를 직접 사용하지 않기 위해 DTO를 사용한다.
+API 요청과 응답에서 Entity를 직접 사용하지 않기 위해 DTO를 사용한다.
 
 사용한 Book DTO:
 
-* `BookCreateRequest`
-* `BookUpdateRequest`
-* `BookPatchRequest`
-* `BookSearchRequest`
-* `BookResponse`
+- `BookCreateRequest`
+- `BookUpdateRequest`
+- `BookPatchRequest`
+- `BookSearchRequest`
+- `BookResponse`
 
 사용한 Member DTO:
 
-* `MemberCreateRequest`
-* `MemberUpdateRequest`
-* `MemberPatchRequest`
-* `MemberSearchRequest`
-* `MemberResponse`
+- `MemberCreateRequest`
+- `MemberUpdateRequest`
+- `MemberPatchRequest`
+- `MemberSearchRequest`
+- `MemberResponse`
 
 사용한 Order DTO:
 
-* `OrderCreateRequest`
-* `OrderSearchRequest`
-* `OrderResponse`
+- `OrderCreateRequest`
+- `OrderSearchRequest`
+- `OrderResponse`
 
-DTO를 사용하면 API 스펙과 내부 도메인 모델을 분리할 수 있다.
+DTO를 사용하면 API 스펙과 내부 Entity 모델을 분리할 수 있다.
 
 ---
 
-## 12. Validation
+## 19. Validation
 
 요청 값 검증에는 Bean Validation을 사용했다.
 
@@ -668,19 +991,19 @@ private Long memberId;
 
 ---
 
-## 13. 예외 처리
+## 20. 예외 처리
 
 공통 예외 처리를 위해 `GlobalExceptionHandler`를 사용했다.
 
 처리한 예외:
 
-* `BookNotFoundException`
-* `MemberNotFoundException`
-* `OrderNotFoundException`
-* `DuplicateEmailException`
-* `MethodArgumentNotValidException`
-* `IllegalArgumentException`
-* `IllegalStateException`
+- `BookNotFoundException`
+- `MemberNotFoundException`
+- `OrderNotFoundException`
+- `DuplicateEmailException`
+- `MethodArgumentNotValidException`
+- `IllegalArgumentException`
+- `IllegalStateException`
 
 ---
 
@@ -763,198 +1086,24 @@ private Long memberId;
 
 ---
 
-## 14. 테스트
+# JPA 전환
 
-### Book Service Test
-
-`BookServiceTest`에서 다음 기능을 검증했다.
-
-* 책 등록
-* 책 단건 조회
-* 없는 책 조회 실패
-* 책 전체 조회
-* PUT 전체 수정
-* PATCH 제목만 수정
-* PATCH 가격만 수정
-* 책 삭제
-* 없는 책 삭제 실패
-* 제목 검색
-* 가격 범위 검색
-* 제목 + 가격 검색
-
----
-
-### Book Controller Test
-
-`BookControllerTest`에서 MockMvc를 사용해 API 요청/응답을 검증했다.
-
-검증한 내용:
-
-* `POST /books` → 201 Created
-* `GET /books/{id}` → 200 OK
-* `GET /books` → 200 OK
-* `PUT /books/{id}` → 200 OK
-* `PATCH /books/{id}` → 200 OK
-* `DELETE /books/{id}` → 204 No Content
-* 잘못된 요청 → 400 Bad Request
-* 없는 책 조회 → 404 Not Found
-* 검색 API → 200 OK
-
----
-
-### Member Service Test
-
-`MemberServiceTest`에서 다음 기능을 검증했다.
-
-* 회원 등록
-* 이메일 중복 등록 실패
-* 회원 단건 조회
-* 없는 회원 조회 실패
-* 회원 전체 조회
-* PUT 전체 수정
-* PUT 이메일 중복 수정 실패
-* PATCH 이름만 수정
-* PATCH 이메일만 수정
-* PATCH 나이만 수정
-* PATCH 이메일 중복 수정 실패
-* 회원 삭제
-* 없는 회원 삭제 실패
-* 이름 검색
-* 이메일 검색
-* 이름 + 이메일 검색
-
----
-
-### Member Controller Test
-
-`MemberControllerTest`에서 MockMvc를 사용해 API 요청/응답을 검증했다.
-
-검증한 내용:
-
-* `POST /members` → 201 Created
-* 이메일 중복 등록 → 400 Bad Request
-* `GET /members/{id}` → 200 OK
-* 없는 회원 조회 → 404 Not Found
-* `GET /members` → 200 OK
-* `PUT /members/{id}` → 200 OK
-* `PATCH /members/{id}` → 200 OK
-* `DELETE /members/{id}` → 204 No Content
-* 검색 API → 200 OK
-
----
-
-### Order Service Test
-
-`OrderServiceTest`에서 다음 기능을 검증했다.
-
-* 주문 생성
-* 없는 회원으로 주문 생성 실패
-* 없는 책으로 주문 생성 실패
-* 주문 단건 조회
-* 없는 주문 조회 실패
-* 주문 전체 조회
-* 주문 취소
-* 이미 취소된 주문 다시 취소 실패
-* 회원 ID로 주문 검색
-* 상태로 주문 검색
-* 회원 ID + 상태로 주문 검색
-
----
-
-### Order Controller Test
-
-`OrderControllerTest`에서 MockMvc를 사용해 API 요청/응답을 검증했다.
-
-검증한 내용:
-
-* `POST /orders` → 201 Created
-* 주문 생성 검증 실패 → 400 Bad Request
-* 없는 회원으로 주문 생성 → 404 Not Found
-* 없는 책으로 주문 생성 → 404 Not Found
-* `GET /orders/{id}` → 200 OK
-* 없는 주문 조회 → 404 Not Found
-* `GET /orders` → 200 OK
-* `PATCH /orders/{id}/cancel` → 200 OK
-* 이미 취소된 주문 다시 취소 → 400 Bad Request
-* 주문 검색 API → 200 OK
-
----
-
-## 15. 현재까지 배운 핵심
-
-* Spring MVC REST API 기본 흐름
-* Controller / Service / Repository 역할 분리
-* DTO를 통한 요청/응답 분리
-* Validation 적용
-* Global Exception Handling
-* HTTP Status Code 사용
-* PUT과 PATCH의 차이
-* Stream filter를 활용한 검색
-* 이메일 중복 검사 로직
-* 단순 CRUD와 행위 API의 차이
-* 주문 생성 시 다른 도메인 존재 확인
-* 주문 취소 상태 변경
-* Service 단위 테스트
-* MockMvc 기반 Controller 테스트
-* 같은 구조를 여러 도메인에 반복 적용하기
-
----
-
-## 16. 다음 목표
-
-다음 단계에서는 현재 메모리 저장소 기반 구조를 JPA 기반으로 전환한다.
-
-우선 전환 대상:
-
-```text
-Book
-```
-
-목표:
-
-* H2 Database 추가
-* Spring Data JPA 추가
-* `Book`을 JPA Entity로 변경
-* `MemoryBookRepository`를 JPA 기반 Repository로 교체
-* 기존 Controller / Service 구조를 최대한 유지
-* 기존 테스트를 JPA 환경에 맞게 조정
-* 계층 분리의 장점 체감하기
-
-예상 흐름:
-
-```text
-MemoryBookRepository
-↓
-JpaBookRepository
-```
-
-핵심 목표는 저장소 구현이 바뀌어도 Controller와 Service 흐름이 크게 흔들리지 않게 만드는 것이다.
-
-## JPA 전환
+## 21. JPA 전환 목적
 
 기존에는 `MemoryRepository` 기반으로 데이터를 저장했지만, 이후 Spring Data JPA와 H2 Database를 적용하여 실제 데이터베이스 기반 구조로 전환했다.
 
-### 전환 목적
+전환 목적:
 
 - 메모리 저장소에서 DB 저장소로 구조 확장
-- Repository 인터페이스를 유지하면서 구현체만 교체하는 구조 경험
-- JPA 엔티티 매핑, 변경 감지, 트랜잭션 동작 학습
+- Repository 인터페이스를 유지하면서 구현체만 교체
+- JPA Entity 매핑 학습
+- JPA 변경 감지 학습
+- 트랜잭션 동작 학습
 - 통합 테스트를 통해 실제 DB 저장/조회/수정/삭제 검증
 
 ---
 
-## 적용 기술
-
-- Spring Data JPA
-- H2 Database
-- Hibernate
-- JPQL
-- `@Transactional`
-- JPA Integration Test
-
----
-
-## Repository 구조
+## 22. Repository 구조
 
 각 도메인은 Repository 인터페이스를 기준으로 동작한다.
 
@@ -969,7 +1118,11 @@ public interface BookRepository {
 
     List<Book> findAll();
 
+    Page<Book> findAll(Pageable pageable);
+
     List<Book> search(String title, Integer minPrice, Integer maxPrice);
+
+    Page<Book> search(String title, Integer minPrice, Integer maxPrice, Pageable pageable);
 
     void deleteById(Long id);
 
@@ -977,7 +1130,7 @@ public interface BookRepository {
 }
 ```
 
-기존 메모리 구현체는 테스트용으로 유지하고, 실제 애플리케이션 실행 시에는 Spring Data JPA 구현체가 주입되도록 변경했다.
+JPA 구현체 예시:
 
 ```java
 public interface JpaBookRepository extends JpaRepository<Book, Long>, BookRepository {
@@ -988,11 +1141,9 @@ public interface JpaBookRepository extends JpaRepository<Book, Long>, BookReposi
 
 ---
 
-## Entity 전환
+## 23. Entity 전환
 
 ### Book
-
-`Book`은 JPA 엔티티로 전환되었고, `@Id`, `@GeneratedValue`를 사용하여 식별자를 자동 생성한다.
 
 ```java
 @Entity
@@ -1009,11 +1160,27 @@ public class Book {
 }
 ```
 
+---
+
 ### Member
 
-`Member`도 JPA 엔티티로 전환했다.
+```java
+@Entity
+@NoArgsConstructor
+@Getter
+public class Member {
 
-이메일 중복 검사를 위해 `findByEmail`, `existsByEmail` 메서드를 JPA Repository에서 제공하도록 구성했다.
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+    private String email;
+    private int age;
+}
+```
+
+이메일 중복 검사를 위해 JPA Repository에서 다음 메서드를 사용한다.
 
 ```java
 Optional<Member> findByEmail(String email);
@@ -1021,29 +1188,52 @@ Optional<Member> findByEmail(String email);
 boolean existsByEmail(String email);
 ```
 
+---
+
 ### Order
-
-`Order`는 주문 상태를 enum으로 관리한다.
-
-```java
-@Enumerated(EnumType.STRING)
-private OrderStatus status;
-```
-
-`EnumType.STRING`을 사용하여 enum 순서 변경으로 인한 데이터 오류를 방지했다.
-
-또한 `Order`는 SQL 예약어와 충돌할 수 있으므로 테이블명을 `orders`로 지정했다.
 
 ```java
 @Entity
 @Table(name = "orders")
+@NoArgsConstructor
+@Getter
 public class Order {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_id")
+    private Book book;
+
+    private int quantity;
+    private int orderPrice;
+
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
 }
+```
+
+`Order`는 SQL 예약어와 충돌할 수 있으므로 테이블명을 `orders`로 지정했다.
+
+```java
+@Table(name = "orders")
+```
+
+`OrderStatus`는 enum 순서 변경으로 인한 데이터 오류를 방지하기 위해 문자열로 저장한다.
+
+```java
+@Enumerated(EnumType.STRING)
 ```
 
 ---
 
-## JPQL 검색 기능
+## 24. JPQL 검색 기능
 
 Book, Member, Order는 각각 검색 조건에 따라 조회할 수 있도록 JPQL을 사용했다.
 
@@ -1056,8 +1246,15 @@ Book, Member, Order는 각각 검색 조건에 따라 조회할 수 있도록 JP
     and (:minPrice is null or b.price >= :minPrice)
     and (:maxPrice is null or b.price <= :maxPrice)
     """)
-List<Book> search(String title, Integer minPrice, Integer maxPrice);
+Page<Book> search(
+        String title,
+        Integer minPrice,
+        Integer maxPrice,
+        Pageable pageable
+);
 ```
+
+---
 
 ### Member 검색
 
@@ -1067,23 +1264,33 @@ List<Book> search(String title, Integer minPrice, Integer maxPrice);
     where (:name is null or :name = '' or m.name like concat('%', :name, '%'))
     and (:email is null or :email = '' or m.email like concat('%', :email, '%'))
     """)
-List<Member> search(String name, String email);
+Page<Member> search(
+        String name,
+        String email,
+        Pageable pageable
+);
 ```
+
+---
 
 ### Order 검색
 
 ```java
 @Query("""
     select o from Order o
-    where (:memberId is null or o.memberId = :memberId)
+    where (:memberId is null or o.member.id = :memberId)
     and (:status is null or o.status = :status)
     """)
-List<Order> search(Long memberId, OrderStatus status);
+Page<Order> search(
+        Long memberId,
+        OrderStatus status,
+        Pageable pageable
+);
 ```
 
 ---
 
-## 트랜잭션과 변경 감지
+## 25. 트랜잭션과 변경 감지
 
 JPA에서는 엔티티 값을 변경할 때 트랜잭션 안에서 실행되어야 변경 감지가 동작한다.
 
@@ -1102,9 +1309,221 @@ public Order cancelOrder(Long id) {
 
 ---
 
-## JPA 통합 테스트
+# 페이징과 정렬
 
-각 도메인별로 JPA 통합 테스트를 작성했다.
+## 26. Pageable 적용
+
+목록 조회와 검색 API에 `Pageable`을 적용했다.
+
+적용 대상:
+
+```text
+GET /books
+GET /books/search
+GET /members
+GET /members/search
+GET /orders
+GET /orders/search
+```
+
+요청 예시:
+
+```http
+GET /books?page=0&size=5
+GET /members?page=0&size=5&sort=age,desc
+GET /orders/search?status=CANCELED&page=0&size=5
+```
+
+---
+
+## 27. Page와 PageResponse
+
+Repository에서는 `Page<T>`를 반환하고, Controller에서는 Entity를 Response DTO로 변환한 뒤 `PageResponse<T>`로 감싼다.
+
+예시:
+
+```java
+@GetMapping
+public ApiResponse<PageResponse<BookResponse>> findBooks(Pageable pageable) {
+    Page<BookResponse> books = bookService.findBooks(pageable)
+            .map(BookResponse::new);
+
+    return ApiResponse.of(PageResponse.from(books));
+}
+```
+
+`Page.map()`을 사용해 Entity를 Response DTO로 변환한다.
+
+```java
+Page<Book>
+↓
+Page<BookResponse>
+```
+
+---
+
+## 28. MemoryRepository의 페이징 처리
+
+JPA Repository는 Pageable을 자동 처리하지만, MemoryRepository는 직접 리스트를 잘라서 `PageImpl`로 반환해야 한다.
+
+예시:
+
+```java
+@Override
+public Page<Book> findAll(Pageable pageable) {
+    List<Book> books = new ArrayList<>(store.values());
+
+    int start = (int) pageable.getOffset();
+    int end = Math.min(start + pageable.getPageSize(), books.size());
+
+    if (start >= books.size()) {
+        return new PageImpl<>(List.of(), pageable, books.size());
+    }
+
+    List<Book> pageContent = books.subList(start, end);
+
+    return new PageImpl<>(pageContent, pageable, books.size());
+}
+```
+
+검색 페이징에서는 먼저 조건 검색을 하고, 그 결과를 페이징해야 한다.
+
+```java
+@Override
+public Page<Order> search(Long memberId, OrderStatus status, Pageable pageable) {
+    List<Order> orders = search(memberId, status);
+
+    int start = (int) pageable.getOffset();
+    int end = Math.min(start + pageable.getPageSize(), orders.size());
+
+    if (start >= orders.size()) {
+        return new PageImpl<>(List.of(), pageable, orders.size());
+    }
+
+    List<Order> pageContent = orders.subList(start, end);
+
+    return new PageImpl<>(pageContent, pageable, orders.size());
+}
+```
+
+---
+
+# 테스트
+
+## 29. Service Test
+
+### BookServiceTest
+
+검증 내용:
+
+- 책 등록
+- 책 단건 조회
+- 없는 책 조회 실패
+- 책 전체 조회
+- PUT 전체 수정
+- PATCH 제목만 수정
+- PATCH 가격만 수정
+- 책 삭제
+- 없는 책 삭제 실패
+- 제목 검색
+- 가격 범위 검색
+- 제목 + 가격 검색
+
+---
+
+### MemberServiceTest
+
+검증 내용:
+
+- 회원 등록
+- 이메일 중복 등록 실패
+- 회원 단건 조회
+- 없는 회원 조회 실패
+- 회원 전체 조회
+- PUT 전체 수정
+- PUT 이메일 중복 수정 실패
+- PATCH 이름만 수정
+- PATCH 이메일만 수정
+- PATCH 나이만 수정
+- PATCH 이메일 중복 수정 실패
+- 회원 삭제
+- 없는 회원 삭제 실패
+- 이름 검색
+- 이메일 검색
+- 이름 + 이메일 검색
+
+---
+
+### OrderServiceTest
+
+검증 내용:
+
+- 주문 생성
+- 없는 회원으로 주문 생성 실패
+- 없는 책으로 주문 생성 실패
+- 주문 단건 조회
+- 없는 주문 조회 실패
+- 주문 전체 조회
+- 주문 취소
+- 이미 취소된 주문 다시 취소 실패
+- 회원 ID로 주문 검색
+- 상태로 주문 검색
+- 회원 ID + 상태로 주문 검색
+
+---
+
+## 30. Controller Test
+
+MockMvc를 사용해 API 요청/응답을 검증했다.
+
+검증 내용:
+
+- 등록 API `201 Created`
+- 단건 조회 API `200 OK`
+- 목록 조회 API `200 OK`
+- 페이징 응답 구조 검증
+- 수정 API `200 OK`
+- 부분 수정 API `200 OK`
+- 삭제 API `204 No Content`
+- 검색 API `200 OK`
+- Validation 실패 `400 Bad Request`
+- 없는 리소스 조회 `404 Not Found`
+- 중복 이메일 `400 Bad Request`
+- 취소된 주문 재취소 `400 Bad Request`
+
+페이징 응답 구조 변경으로 인해 테스트의 JSON 경로도 변경했다.
+
+기존 List 응답:
+
+```java
+jsonPath("$.data.length()")
+jsonPath("$.data[0].title")
+```
+
+현재 Page 응답:
+
+```java
+jsonPath("$.data.content.length()")
+jsonPath("$.data.content[0].title")
+jsonPath("$.data.page")
+jsonPath("$.data.size")
+jsonPath("$.data.totalElements")
+jsonPath("$.data.totalPages")
+jsonPath("$.data.first")
+jsonPath("$.data.last")
+```
+
+standalone MockMvc 테스트에서는 Pageable을 처리하기 위해 다음 설정을 추가했다.
+
+```java
+.setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+```
+
+---
+
+## 31. JPA Integration Test
+
+실제 Spring Context, H2 Database, JPA를 사용한 통합 테스트를 작성했다.
 
 ### BookJpaIntegrationTest
 
@@ -1116,6 +1535,8 @@ public Order cancelOrder(Long id) {
 - 책 삭제
 - 책 검색
 
+---
+
 ### MemberJpaIntegrationTest
 
 검증 내용:
@@ -1126,6 +1547,8 @@ public Order cancelOrder(Long id) {
 - 회원 수정 시 변경 감지 동작
 - 회원 삭제
 - 회원 검색
+
+---
 
 ### OrderJpaIntegrationTest
 
@@ -1142,9 +1565,9 @@ public Order cancelOrder(Long id) {
 
 ---
 
-## JPA 전환 중 해결한 문제
+# 해결한 문제
 
-### 1. Repository 메서드 반환 타입 충돌
+## 32. Repository 메서드 반환 타입 충돌
 
 `JpaRepository`와 직접 만든 Repository 인터페이스를 함께 상속할 때, 겹치는 메서드의 반환 타입이 다르면 충돌이 발생했다.
 
@@ -1158,7 +1581,7 @@ List<Member> findAll();
 
 ---
 
-### 2. JPQL 문법 오류
+## 33. JPQL 문법 오류
 
 JPQL에서는 엔티티명을 기준으로 조회해야 한다.
 
@@ -1176,7 +1599,27 @@ select o from Order o
 
 ---
 
-### 3. SQL 예약어 충돌
+## 34. JPQL 파라미터 공백 오류
+
+JPQL 파라미터는 `:` 뒤에 공백 없이 작성해야 한다.
+
+잘못된 예:
+
+```java
+o.member.id = : memberId
+o.status =: status
+```
+
+올바른 예:
+
+```java
+o.member.id = :memberId
+o.status = :status
+```
+
+---
+
+## 35. SQL 예약어 충돌
 
 `Order`는 SQL 예약어와 충돌할 수 있기 때문에 테이블명을 `orders`로 변경했다.
 
@@ -1189,7 +1632,7 @@ public class Order {
 
 ---
 
-### 4. 변경 감지 미동작
+## 36. 변경 감지 미동작
 
 주문 취소 후 다시 조회했을 때 상태가 변경되지 않는 문제가 있었다.
 
@@ -1208,27 +1651,211 @@ public Order cancelOrder(Long id) {
 
 ---
 
-## 현재 프로젝트 상태
+## 37. H2 파일 DB Lock 문제
 
-- Book CRUD API 구현 완료
-- Member CRUD API 구현 완료
-- Order CRUD API 구현 완료
-- MemoryRepository 기반 구현 완료
-- JPA Repository 기반 전환 완료
-- JPQL 검색 기능 구현
+H2 파일 DB를 여러 프로세스가 동시에 잡고 있으면 다음 문제가 발생했다.
+
+```text
+Database may be already in use
+```
+
+해결 방법:
+
+- 중복 실행 중인 서버 종료
+- 별도로 실행한 H2 앱 종료
+- Spring Boot 앱에서 제공하는 `/h2-console` 사용
+
+---
+
+## 38. H2 Console 404 문제
+
+Spring Boot 4 환경에서 H2 Console이 404로 뜨는 문제가 있었다.
+
+해결을 위해 H2 Console 관련 의존성을 추가했다.
+
+```gradle
+developmentOnly 'org.springframework.boot:spring-boot-h2console'
+```
+
+---
+
+## 39. H2 Console JDBC URL 문제
+
+H2 Console 로그인 시 TCP URL을 사용하면 다음 오류가 발생했다.
+
+```text
+Connection refused: localhost
+```
+
+현재 프로젝트는 H2 TCP 서버를 띄운 것이 아니라 파일 DB를 사용하므로 아래 URL로 접속해야 한다.
+
+```text
+jdbc:h2:file:./data/mvc-crud
+```
+
+---
+
+## 40. 잘못된 Page import 문제
+
+OrderController에서 `Page` import를 잘못 가져와 컴파일 오류가 발생했다.
+
+잘못된 import:
+
+```java
+import org.hibernate.query.Page;
+```
+
+올바른 import:
+
+```java
+import org.springframework.data.domain.Page;
+```
+
+---
+
+## 41. MemoryRepository 검색 페이징 오류
+
+검색 페이징 구현에서 조건 검색을 하지 않고 전체 데이터를 페이징해 테스트가 실패했다.
+
+잘못된 코드:
+
+```java
+List<Order> orders = new ArrayList<>(store.values());
+```
+
+올바른 코드:
+
+```java
+List<Order> orders = search(memberId, status);
+```
+
+검색 페이징에서는 반드시 조건 검색 결과를 먼저 만들고, 그 결과를 페이징해야 한다.
+
+---
+
+# 현재 프로젝트 상태
+
+## 42. 완료된 항목
+
+- Book CRUD API 구현
+- Member CRUD API 구현
+- Order CRUD API 구현
+- Request DTO / Response DTO 적용
+- ApiResponse 공통 응답 구조 적용
+- PageResponse 페이징 응답 구조 적용
 - Bean Validation 적용
 - GlobalExceptionHandler 적용
+- MemoryRepository 기반 구현
+- JPA Repository 기반 전환
+- H2 Database 연동
+- H2 파일 DB dev profile 구성
+- H2 Console 설정
+- 더미 데이터 자동 삽입
+- JPQL 검색 기능 구현
+- Pageable 기반 페이징/정렬 구현
+- Order와 Member, Book 간 `@ManyToOne` 연관관계 적용
 - Controller 단위 테스트 작성
+- 페이징 응답 구조에 맞게 Controller 테스트 수정
 - JPA 통합 테스트 작성
 
 ---
 
-## 다음 개선 예정
+## 43. 현재 API 상태
 
-- Order와 Member, Book 간 JPA 연관관계 적용
-- `@ManyToOne` 기반 주문 구조 개선
-- DTO와 Entity 책임 분리 강화
-- API 응답 구조 개선
-- 페이징 기능 추가
-- 실제 MySQL 또는 PostgreSQL 연동
-- Docker 기반 DB 실행 환경 구성
+```text
+Book
+- POST   /books
+- GET    /books/{id}
+- GET    /books?page=0&size=5
+- GET    /books/search?title=자바&page=0&size=5
+- PUT    /books/{id}
+- PATCH  /books/{id}
+- DELETE /books/{id}
+
+Member
+- POST   /members
+- GET    /members/{id}
+- GET    /members?page=0&size=5
+- GET    /members/search?name=김&page=0&size=5
+- PUT    /members/{id}
+- PATCH  /members/{id}
+- DELETE /members/{id}
+
+Order
+- POST   /orders
+- GET    /orders/{id}
+- GET    /orders?page=0&size=5
+- GET    /orders/search?memberId=1&status=CANCELED&page=0&size=5
+- PATCH  /orders/{id}/cancel
+```
+
+---
+
+# 배운 핵심
+
+## 44. Spring MVC
+
+- Controller는 HTTP 요청과 응답을 담당한다.
+- Service는 비즈니스 흐름을 담당한다.
+- Repository는 저장소 접근을 담당한다.
+- DTO를 사용하면 API 스펙과 내부 모델을 분리할 수 있다.
+- Validation은 잘못된 요청을 빠르게 막아준다.
+- GlobalExceptionHandler는 예외 응답을 일관되게 만든다.
+
+---
+
+## 45. JPA
+
+- Entity는 DB 테이블과 매핑된다.
+- `@Id`, `@GeneratedValue`로 식별자를 관리한다.
+- `@Transactional` 안에서 Entity 값을 변경하면 변경 감지가 동작한다.
+- enum은 `@Enumerated(EnumType.STRING)`으로 저장하는 것이 안전하다.
+- SQL 예약어와 엔티티명이 충돌하면 `@Table`로 테이블명을 지정한다.
+- `@ManyToOne(fetch = FetchType.LAZY)`로 다대일 연관관계를 표현할 수 있다.
+
+---
+
+## 46. 페이징
+
+- `Pageable`은 요청의 `page`, `size`, `sort` 정보를 담는다.
+- `Page<T>`는 실제 데이터와 페이징 메타데이터를 함께 가진다.
+- `Page.map()`을 사용하면 `Page<Entity>`를 `Page<ResponseDto>`로 변환할 수 있다.
+- API 응답에서는 `PageResponse<T>`로 필요한 정보만 노출한다.
+- MemoryRepository에서는 `PageImpl`로 페이징 결과를 직접 만들어야 한다.
+
+---
+
+# 다음 개선 예정
+
+## 47. 다음 단계 후보
+
+- `createdAt`, `updatedAt` 추가
+- BaseEntity 도입
+- MySQL 또는 PostgreSQL 연동
+- Docker Compose로 DB 실행 환경 구성
+- Swagger 또는 Spring REST Docs로 API 문서화
+- 인증/인가 적용
+- 로그인 기능 추가
+- 회원별 주문 조회 API 추가
+- 주문 구조를 `OrderItem` 기반으로 확장
+- `@ManyToOne` 연관관계에 대한 fetch join 최적화
+- N+1 문제 실습
+- 페이징 기본값 설정
+- 정렬 가능한 필드 제한
+- API 에러 응답 구조 개선
+- CI 환경에서 테스트 자동 실행
+
+---
+
+## 48. 추천 다음 작업
+
+다음 작업으로는 `createdAt`, `updatedAt`을 추가하여 생성일/수정일을 자동 관리하는 기능을 적용한다.
+
+예상 학습 내용:
+
+- JPA Auditing
+- `@CreatedDate`
+- `@LastModifiedDate`
+- BaseEntity
+- Entity 공통 필드 분리
+- 테스트에서 시간 필드 검증
