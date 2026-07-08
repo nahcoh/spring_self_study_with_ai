@@ -1859,3 +1859,181 @@ Order
 - BaseEntity
 - Entity 공통 필드 분리
 - 테스트에서 시간 필드 검증
+
+
+# JPA Auditing
+
+## 생성일 / 수정일 자동 관리
+
+각 Entity에 생성일과 수정일을 자동으로 기록하기 위해 JPA Auditing을 적용했다.
+
+적용한 필드:
+
+```text
+createdAt
+updatedAt
+```
+
+`createdAt`은 Entity가 처음 저장될 때 자동으로 입력되고,  
+`updatedAt`은 Entity가 수정될 때 자동으로 갱신된다.
+
+---
+
+## BaseEntity
+
+공통 시간 필드를 여러 Entity에 중복 작성하지 않기 위해 `BaseEntity`를 만들었다.
+
+```java
+@Getter
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
+public abstract class BaseEntity {
+
+    @CreatedDate
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+}
+```
+
+`@MappedSuperclass`를 사용했기 때문에 `BaseEntity` 자체는 테이블로 생성되지 않고,  
+이를 상속한 Entity의 테이블에 `created_at`, `updated_at` 컬럼이 추가된다.
+
+---
+
+## Auditing 활성화
+
+JPA Auditing을 사용하기 위해 메인 애플리케이션 클래스에 `@EnableJpaAuditing`을 추가했다.
+
+```java
+@EnableJpaAuditing
+@SpringBootApplication
+public class MvcCrudApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(MvcCrudApplication.class, args);
+    }
+}
+```
+
+---
+
+## Entity 상속 구조
+
+`Book`, `Member`, `Order`는 모두 `BaseEntity`를 상속한다.
+
+```java
+public class Book extends BaseEntity {
+}
+```
+
+```java
+public class Member extends BaseEntity {
+}
+```
+
+```java
+public class Order extends BaseEntity {
+}
+```
+
+이를 통해 각 Entity는 공통으로 `createdAt`, `updatedAt` 필드를 가진다.
+
+---
+
+## Response DTO에 시간 필드 노출
+
+API 응답에서도 생성일과 수정일을 확인할 수 있도록 Response DTO에 `createdAt`, `updatedAt`을 추가했다.
+
+예시:
+
+```java
+@Getter
+public class BookResponse {
+
+    private final Long id;
+    private final String title;
+    private final int price;
+    private final LocalDateTime createdAt;
+    private final LocalDateTime updatedAt;
+
+    public BookResponse(Book book) {
+        this.id = book.getId();
+        this.title = book.getTitle();
+        this.price = book.getPrice();
+        this.createdAt = book.getCreatedAt();
+        this.updatedAt = book.getUpdatedAt();
+    }
+}
+```
+
+---
+
+## 응답 예시
+
+책 목록 조회 응답 예시:
+
+```json
+{
+  "data": {
+    "content": [
+      {
+        "id": 52,
+        "title": "테스트 책",
+        "price": 15000,
+        "createdAt": "2026-07-08T15:12:45.51623",
+        "updatedAt": "2026-07-08T15:13:30.677527"
+      }
+    ],
+    "page": 0,
+    "size": 20,
+    "totalElements": 11,
+    "totalPages": 1,
+    "first": true,
+    "last": true
+  }
+}
+```
+
+`createdAt`과 `updatedAt`이 다르다면 생성 이후 수정이 발생했다는 뜻이다.
+
+---
+
+## 기존 데이터의 null 문제
+
+JPA Auditing을 적용하기 전에 이미 저장되어 있던 기존 H2 파일 DB 데이터는 `createdAt`, `updatedAt` 값이 `null`일 수 있다.
+
+이유:
+
+```text
+1. 더미데이터가 먼저 저장됨
+2. 이후 createdAt / updatedAt 컬럼 추가
+3. ddl-auto: update가 컬럼만 추가
+4. 기존 row의 시간 값은 자동으로 채워지지 않음
+```
+
+새로 저장되는 데이터부터는 JPA Auditing이 정상 적용된다.
+
+개발용 H2 DB를 초기화하고 싶다면 서버를 종료한 뒤 아래 명령어로 파일 DB를 삭제한다.
+
+```bash
+rm -rf data
+```
+
+그 후 dev 프로필로 다시 실행하면 더미데이터가 새로 생성되고, 시간 필드도 함께 저장된다.
+
+```bash
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
+```
+
+---
+
+## JPA Auditing으로 배운 점
+
+- 공통 필드는 `BaseEntity`로 분리할 수 있다.
+- `@MappedSuperclass`는 부모 클래스의 필드를 자식 Entity 테이블에 포함시킨다.
+- `@CreatedDate`는 생성 시간을 자동 저장한다.
+- `@LastModifiedDate`는 수정 시간을 자동 갱신한다.
+- JPA Auditing을 사용하려면 `@EnableJpaAuditing`이 필요하다.
+- 기존 DB 데이터에는 새로 추가한 시간 컬럼이 `null`일 수 있다.
