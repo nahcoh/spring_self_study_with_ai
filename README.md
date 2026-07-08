@@ -2037,3 +2037,179 @@ SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 - `@LastModifiedDate`는 수정 시간을 자동 갱신한다.
 - JPA Auditing을 사용하려면 `@EnableJpaAuditing`이 필요하다.
 - 기존 DB 데이터에는 새로 추가한 시간 컬럼이 `null`일 수 있다.
+
+---
+
+# MySQL + Docker Compose
+
+## MySQL Docker 환경 구성
+
+H2 외에도 실제 DB 환경에 가까운 개발을 위해 MySQL을 Docker Compose로 실행할 수 있도록 구성했다.
+
+현재 DB 프로필은 다음과 같이 분리되어 있다.
+
+```text
+default profile → H2 Memory DB
+dev profile     → H2 File DB + H2 Console
+mysql profile   → Docker MySQL
+```
+
+---
+
+## docker-compose.yml
+
+프로젝트 루트에 `docker-compose.yml`을 추가했다.
+
+```yaml
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: mvc-crud-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: mvc_crud
+      MYSQL_USER: mvc_user
+      MYSQL_PASSWORD: mvc_password
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
+```
+
+---
+
+## MySQL 프로필 설정
+
+`application-mysql.yml`을 추가하여 MySQL 연결 설정을 분리했다.
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/mvc_crud?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: mvc_user
+    password: mvc_password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
+```
+
+---
+
+## MySQL 실행 방법
+
+프로젝트 루트에서 Docker Compose를 실행한다.
+
+```bash
+docker compose up -d
+```
+
+컨테이너 실행 확인:
+
+```bash
+docker ps
+```
+
+정상 실행 시 `mvc-crud-mysql` 컨테이너가 보여야 한다.
+
+```text
+mvc-crud-mysql
+0.0.0.0:3306->3306/tcp
+```
+
+MySQL 로그 확인:
+
+```bash
+docker logs mvc-crud-mysql
+```
+
+아래 문구가 보이면 MySQL 준비가 완료된 것이다.
+
+```text
+ready for connections
+```
+
+---
+
+## MySQL 프로필로 Spring Boot 실행
+
+```bash
+SPRING_PROFILES_ACTIVE=mysql ./gradlew bootRun
+```
+
+정상 실행 시 로그에서 다음 내용을 확인할 수 있다.
+
+```text
+The following 1 profile is active: "mysql"
+jdbc:mysql://localhost:3306/mvc_crud
+```
+
+---
+
+## MySQL 환경에서 API 확인
+
+MySQL 프로필로 서버를 실행한 뒤 Postman으로 확인한다.
+
+```http
+GET /books?page=0&size=5
+GET /members?page=0&size=5
+GET /orders?page=0&size=5
+```
+
+더미데이터가 적용되어 있다면 MySQL DB에도 초기 데이터가 자동으로 삽입된다.
+
+`DataInitializer`는 다음 프로필에서 동작하도록 설정했다.
+
+```java
+@Profile({"dev", "mysql"})
+```
+
+---
+
+## MySQL 종료
+
+컨테이너 중지:
+
+```bash
+docker compose down
+```
+
+컨테이너와 볼륨까지 모두 삭제:
+
+```bash
+docker compose down -v
+```
+
+`-v` 옵션을 사용하면 MySQL 데이터도 함께 삭제되므로 주의한다.
+
+---
+
+## MySQL 적용으로 배운 점
+
+- Docker Compose로 로컬 DB 환경을 구성할 수 있다.
+- H2와 MySQL을 Spring Profile로 분리할 수 있다.
+- `application-dev.yml`, `application-mysql.yml`처럼 환경별 설정을 나눌 수 있다.
+- MySQL 컨테이너가 완전히 준비되기 전에는 Spring Boot 연결이 실패할 수 있다.
+- `docker logs`로 DB 준비 상태를 확인할 수 있다.
+- JPA Entity와 Repository 코드는 그대로 두고 DB만 교체할 수 있다.
+
+
+- Docker Compose 기반 MySQL 실행 환경 구성
+- mysql profile 추가
+- H2 / MySQL 환경 분리
+- MySQL 환경에서 JPA 동작 확인
+- MySQL 환경에서 Postman API 테스트 완료
