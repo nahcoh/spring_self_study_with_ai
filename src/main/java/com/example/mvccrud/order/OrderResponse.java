@@ -1,5 +1,6 @@
 package com.example.mvccrud.order;
 
+import java.time.LocalDateTime;
 import lombok.Getter;
 
 @Getter
@@ -12,6 +13,8 @@ public class OrderResponse {
     private final int orderPrice;
     private final int totalPrice;
     private final OrderStatus status;
+    private final LocalDateTime createdAt;
+    private final LocalDateTime updatedAt;
 
     public OrderResponse(Order order) {
         this.id = order.getId();
@@ -21,6 +24,8 @@ public class OrderResponse {
         this.orderPrice = order.getOrderPrice();
         this.totalPrice = order.getTotalPrice();
         this.status = order.getStatus();
+        this.createdAt = order.getCreatedAt();
+        this.updatedAt = order.getUpdatedAt();
 
     }
 
