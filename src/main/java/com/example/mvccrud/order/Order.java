@@ -1,6 +1,7 @@
 package com.example.mvccrud.order;
 
 import com.example.mvccrud.book.Book;
+import com.example.mvccrud.global.BaseEntity;
 import com.example.mvccrud.member.Member;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "orders")
 @NoArgsConstructor
 @Getter
-public class Order {
+public class Order extends BaseEntity {
 
     @Id
     @GeneratedValue
