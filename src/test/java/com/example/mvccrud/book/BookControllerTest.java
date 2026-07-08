@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.mvccrud.global.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -25,6 +26,7 @@ class BookControllerTest {
         mockMvc = MockMvcBuilders
             .standaloneSetup(bookController)
             .setControllerAdvice(new GlobalExceptionHandler())
+            .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
             .build();
 
         objectMapper = new ObjectMapper();
@@ -113,9 +115,17 @@ class BookControllerTest {
             .content(objectMapper.writeValueAsString(new BookCreateRequest("자바의 정석", 39000))));
         //when
 
-        mockMvc.perform(get("/books"))
+        mockMvc.perform(get("/books")
+                .param("page", "0")
+                .param("size", "5"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.length()").value(2));
+            .andExpect(jsonPath("$.data.content.length()").value(2))
+            .andExpect(jsonPath("$.data.page").value(0))
+            .andExpect(jsonPath("$.data.size").value(5))
+            .andExpect(jsonPath("$.data.totalElements").value(2))
+            .andExpect(jsonPath("$.data.totalPages").value(1))
+            .andExpect(jsonPath("$.data.first").value(true))
+            .andExpect(jsonPath("$.data.last").value(true));
         //then
     }
 
@@ -208,10 +218,18 @@ class BookControllerTest {
         //when
 
         mockMvc.perform(get("/books/search")
-                .param("title", "자바"))
+                .param("title", "자바")
+                .param("page","0")
+                .param("size", "5"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.length()").value(1))
-            .andExpect(jsonPath("$.data[0].title").value("자바의 정석"));
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].title").value("자바의 정석"))
+            .andExpect(jsonPath("$.data.page").value(0))
+            .andExpect(jsonPath("$.data.size").value(5))
+            .andExpect(jsonPath("$.data.totalElements").value(1))
+            .andExpect(jsonPath("$.data.totalPages").value(1))
+            .andExpect(jsonPath("$.data.first").value(true))
+            .andExpect(jsonPath("$.data.last").value(true));
 
         //then
     }
@@ -232,9 +250,18 @@ class BookControllerTest {
 
         mockMvc.perform(get("/books/search")
                 .param("minPrice", "20000")
-                .param("maxPrice", "30000"))
+                .param("maxPrice", "30000")
+                .param("page","0")
+                .param("size","5"))
+
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.length()").value(2));
+            .andExpect(jsonPath("$.data.content.length()").value(2))
+            .andExpect(jsonPath("$.data.page").value(0))
+            .andExpect(jsonPath("$.data.size").value(5))
+            .andExpect(jsonPath("$.data.totalElements").value(2))
+            .andExpect(jsonPath("$.data.totalPages").value(1))
+            .andExpect(jsonPath("$.data.first").value(true))
+            .andExpect(jsonPath("$.data.last").value(true));
 
         //then
     }
@@ -257,10 +284,17 @@ class BookControllerTest {
         mockMvc.perform(get("/books/search")
                 .param("title", "자바")
                 .param("minPrice", "20000")
-                .param("maxPrice", "40000"))
+                .param("maxPrice", "40000")
+                .param("page", "0")
+                .param("size", "5"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.length()").value(1))
-            .andExpect(jsonPath("$.data[0].title").value("자바의 정석"));
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.page").value(0))
+            .andExpect(jsonPath("$.data.size").value(5))
+            .andExpect(jsonPath("$.data.totalElements").value(1))
+            .andExpect(jsonPath("$.data.totalPages").value(1))
+            .andExpect(jsonPath("$.data.first").value(true))
+            .andExpect(jsonPath("$.data.last").value(true));
 
         //then
     }

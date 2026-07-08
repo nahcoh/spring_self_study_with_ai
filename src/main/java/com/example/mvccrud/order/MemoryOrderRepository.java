@@ -67,7 +67,7 @@ public class MemoryOrderRepository implements OrderRepository {
 
     @Override
     public Page<Order> search(Long memberId, OrderStatus status, Pageable pageable) {
-        List<Order> orders = new ArrayList<>(store.values());
+        List<Order> orders = search(memberId, status);
 
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), orders.size());

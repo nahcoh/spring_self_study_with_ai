@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.mvccrud.global.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -28,6 +29,7 @@ class MemberControllerTest {
         mockMvc = MockMvcBuilders
             .standaloneSetup(memberController)
             .setControllerAdvice(new GlobalExceptionHandler())
+            .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
             .build();
 
         objectMapper = new ObjectMapper();
@@ -137,7 +139,7 @@ class MemberControllerTest {
 
         mockMvc.perform(get("/members"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.length()").value(2));
+            .andExpect(jsonPath("$.data.content.length()").value(2));
     }
 
     @Test
@@ -248,8 +250,8 @@ class MemberControllerTest {
                 .param("name", "김")
                 .param("email", "test.com"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.length()").value(1))
-            .andExpect(jsonPath("$.data[0].name").value("김철수"));
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].name").value("김철수"));
 
         //then
     }

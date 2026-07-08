@@ -14,6 +14,7 @@ import com.example.mvccrud.member.MemberService;
 import com.example.mvccrud.member.MemoryMemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -42,6 +43,7 @@ class OrderControllerTest {
         mockMvc = MockMvcBuilders
             .standaloneSetup(memberController, bookController, orderController)
             .setControllerAdvice(new GlobalExceptionHandler())
+            .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
             .build();
 
         objectMapper = new ObjectMapper();
@@ -144,7 +146,7 @@ class OrderControllerTest {
 
         mockMvc.perform(get("/orders"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.length()").value(2));
+            .andExpect(jsonPath("$.data.content.length()").value(2));
     }
 
     @Test
@@ -186,10 +188,12 @@ class OrderControllerTest {
 
         mockMvc.perform(get("/orders/search")
                 .param("memberId", String.valueOf(memberId))
-                .param("status", "CANCELED"))
+                .param("status", "CANCELED")
+                .param("page","0")
+                .param("size","5"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.length()").value(1))
-            .andExpect(jsonPath("$.data[0].status").value("CANCELED"));
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].status").value("CANCELED"));
         //when
 
         //then
