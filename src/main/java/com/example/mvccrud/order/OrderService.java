@@ -68,4 +68,35 @@ public class OrderService {
         return orderRepository.search(memberId, status, pageable);
     }
 
+    @Transactional
+    public OrderResponse createOrderResponse(Long memberId, Long bookId, int quantity) {
+        Order order = createOrder(memberId, bookId, quantity);
+        return new OrderResponse(order);
+    }
+
+    public OrderResponse findOrderResponse(Long id) {
+        Order order = findOrder(id);
+        return new OrderResponse(order);
+    }
+
+    public Page<OrderResponse> findOrderResponses(Pageable pageable) {
+        return orderRepository.findAll(pageable)
+            .map(OrderResponse::new);
+    }
+
+    @Transactional
+    public OrderResponse cancelOrderResponse(Long id) {
+        Order order = cancelOrder(id);
+        return new OrderResponse(order);
+    }
+
+    public Page<OrderResponse> searchOrderResponses(
+        Long memberId,
+        OrderStatus status,
+        Pageable pageable
+    ) {
+        return orderRepository.search(memberId, status, pageable)
+            .map(OrderResponse::new);
+    }
+
 }

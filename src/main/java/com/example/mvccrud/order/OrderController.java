@@ -3,12 +3,10 @@ package com.example.mvccrud.order;
 import com.example.mvccrud.global.ApiResponse;
 import com.example.mvccrud.global.PageResponse;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -32,49 +30,48 @@ public class OrderController {
     public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
         @RequestBody @Valid OrderCreateRequest request
     ) {
-        Order order = orderService.createOrder(
+        OrderResponse order = orderService.createOrderResponse(
             request.getMemberId(),
             request.getBookId(),
             request.getQuantity()
         );
 
-        ApiResponse<OrderResponse> response = ApiResponse.of(
-            new OrderResponse(order));
+
 
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(response);
+            .body(ApiResponse.of(order));
     }
 
 
     @GetMapping("/{id}")
     public ApiResponse<OrderResponse> findOrder(@PathVariable Long id) {
-        Order order = orderService.findOrder(id);
-        return ApiResponse.of(new OrderResponse(order));
+        OrderResponse order = orderService.findOrderResponse(id);
+
+        return ApiResponse.of(order);
     }
 
     @GetMapping
     public ApiResponse<PageResponse<OrderResponse>> findOrders(Pageable pageable) {
-        Page<OrderResponse> orders = orderService.findOrders(pageable)
-            .map(OrderResponse::new);
+        Page<OrderResponse> orders = orderService.findOrderResponses(pageable);
 
         return ApiResponse.of(PageResponse.from(orders));
     }
 
     @PatchMapping("/{id}/cancel")
     public ApiResponse<OrderResponse> cancelOrder(@PathVariable Long id) {
-        Order order = orderService.cancelOrder(id);
-        return ApiResponse.of(new OrderResponse(order));
+        OrderResponse order = orderService.cancelOrderResponse(id);
+
+        return ApiResponse.of(order);
     }
 
     @GetMapping("/search")
     public ApiResponse<PageResponse<OrderResponse>> searchOrders(
         @ModelAttribute OrderSearchRequest request, Pageable pageable) {
-        Page<OrderResponse> orders = orderService.searchOrders(
-                request.getMemberId(),
-                request.getStatus(),
-                pageable
-            )
-            .map(OrderResponse::new);
+        Page<OrderResponse> orders = orderService.searchOrderResponses(
+            request.getMemberId(),
+            request.getStatus(),
+            pageable
+        );
 
         return ApiResponse.of(PageResponse.from(orders));
     }
