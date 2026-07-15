@@ -2213,3 +2213,59 @@ docker compose down -v
 - H2 / MySQL 환경 분리
 - MySQL 환경에서 JPA 동작 확인
 - MySQL 환경에서 Postman API 테스트 완료
+
+#Swagger / OpenAPI
+## Swagger 적용
+API 문서화를 위해 SpringDoc OpenAPI를 적용했다.
+
+Swagger UI를 통해 Book, Member, Order API의 요청/응답 구조를 확인하고 직접 테스트할 수 있다.
+
+---
+## Swagger UI 접속
+서버 실행 후 아래 주소로 접속한다. 
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+OpenAPI JSON 문서는 아래 주소에서 확인할 수 있다.
+```text
+http://localhost:8080/v3/api-docs
+```
+---
+## 적용 내용
+- Swagger UI 추가
+- OpenAPI 문서 제목, 설명, 버전 설정
+- Controller별 API 그룹화
+- API별 설명 추가 
+- Request DTO / Response DTO 필드 설명 추가
+
+---
+## API 그룹
+```text
+Book API
+Member API
+Order API
+```
+## 예시
+```java
+@Tag(name = "Book API", description = "책 등록, 조회, 수정, 삭제, 검색 API")
+@RestController
+@RequestMapping("/books")
+public class BookController {
+}
+```
+```java
+@Operation(summary = "책 등록", description = "책 제목과 가격을 입력받아 새 책을 등록합니다.")
+@PostMapping
+public ResponseEntity<ApiResponse<BookResponse>> createBook(...){
+}
+```
+```java
+@Schema(description = "책 제목", example = "데미안")
+private String title;
+```
+## Swagger 적용으로 배운 점
+- SpringDoc OpenAPI로 API 문서를 자동 생성할 수 있다.
+- Controller의 `@Operation`으로 API설명을 추가할 수 있다.
+- `@Tag`로 API 그룹을 나눌 수 있다.
+- DTO 필드에 `@Schema`를 붙여 요청/응답 스키마 설명을 제공할 수 있다.
+- Postman 없이 브라우저에서 API를 테스트할 수 있다.
