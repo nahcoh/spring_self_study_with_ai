@@ -7,6 +7,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,7 +60,9 @@ public class OrderController {
 
     @Operation(summary = "주문 목록 조회", description = "주문 목록을 페이징과 정렬 조건으로 조회합니다.")
     @GetMapping
-    public ApiResponse<PageResponse<OrderResponse>> findOrders(Pageable pageable) {
+    public ApiResponse<PageResponse<OrderResponse>> findOrders(
+        @PageableDefault(size = 15, sort = "id", direction = Direction.DESC)
+        Pageable pageable) {
         Page<OrderResponse> orders = orderService.findOrderResponses(pageable);
 
         return ApiResponse.of(PageResponse.from(orders));
@@ -74,7 +79,9 @@ public class OrderController {
     @Operation(summary = "주문 검색", description = "회원 ID와 주문 상태 조건으로 주문을 검색합니다.")
     @GetMapping("/search")
     public ApiResponse<PageResponse<OrderResponse>> searchOrders(
-        @ModelAttribute OrderSearchRequest request, Pageable pageable) {
+        @ModelAttribute OrderSearchRequest request,
+        @PageableDefault(size = 7, sort = "id", direction = Direction.DESC)
+        Pageable pageable) {
         Page<OrderResponse> orders = orderService.searchOrderResponses(
             request.getMemberId(),
             request.getStatus(),

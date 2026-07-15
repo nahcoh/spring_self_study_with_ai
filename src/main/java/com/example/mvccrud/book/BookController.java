@@ -8,6 +8,9 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -54,7 +57,9 @@ public class BookController {
 
     @Operation(summary = "책 목록 조회", description = "책 목록을 페이징과 정렬 조건으로 조회합니다.")
     @GetMapping
-    public ApiResponse<PageResponse<BookResponse>> findBooks(Pageable pageable) {
+    public ApiResponse<PageResponse<BookResponse>> findBooks(
+        @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC)
+        Pageable pageable) {
         Page<BookResponse> books = bookService.findBooks(pageable)
             .map(BookResponse::new);
 
@@ -92,8 +97,9 @@ public class BookController {
     @Operation(summary = "책 검색", description = "제목, 최소 가격, 최대 가격 조건으로 책을 검색합니다.")
     @GetMapping("/search")
     public ApiResponse<PageResponse<BookResponse>> searchBooks(
-        @ModelAttribute BookSearchRequest request
-        , Pageable pageable) {
+        @ModelAttribute BookSearchRequest request,
+        @PageableDefault(size = 10, sort = "id", direction = Direction.DESC)
+        Pageable pageable) {
 
         Page<BookResponse> books = bookService.searchBooks(
             request.getTitle(),
