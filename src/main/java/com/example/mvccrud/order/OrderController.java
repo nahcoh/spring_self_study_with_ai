@@ -2,9 +2,11 @@ package com.example.mvccrud.order;
 
 import com.example.mvccrud.global.ApiResponse;
 import com.example.mvccrud.global.PageResponse;
+import com.example.mvccrud.global.SortValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -27,9 +29,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     private final OrderService orderService;
+    private final SortValidator sortValidator;
+    private static final Set<String> ORDER_SORT_FIELDS = Set.of(
+        "id", "quantity", "orderPrice", "status", "createdAt", "updatedAt"
+    );
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, SortValidator sortValidator) {
         this.orderService = orderService;
+        this.sortValidator = sortValidator;
     }
 
     @Operation(summary = "주문 생성", description = "회원 ID, 책 ID, 수량을 입력받아 주문을 생성합니다.")
@@ -63,6 +70,8 @@ public class OrderController {
     public ApiResponse<PageResponse<OrderResponse>> findOrders(
         @PageableDefault(size = 15, sort = "id", direction = Direction.DESC)
         Pageable pageable) {
+        sortValidator.validate(pageable, ORDER_SORT_FIELDS);
+
         Page<OrderResponse> orders = orderService.findOrderResponses(pageable);
 
         return ApiResponse.of(PageResponse.from(orders));
@@ -82,6 +91,8 @@ public class OrderController {
         @ModelAttribute OrderSearchRequest request,
         @PageableDefault(size = 7, sort = "id", direction = Direction.DESC)
         Pageable pageable) {
+        sortValidator.validate(pageable, ORDER_SORT_FIELDS);
+
         Page<OrderResponse> orders = orderService.searchOrderResponses(
             request.getMemberId(),
             request.getStatus(),

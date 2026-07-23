@@ -2,10 +2,12 @@ package com.example.mvccrud.member;
 
 import com.example.mvccrud.global.ApiResponse;
 import com.example.mvccrud.global.PageResponse;
+import com.example.mvccrud.global.SortValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -30,9 +32,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController {
 
     private final MemberService memberService;
+    private final SortValidator sortValidator;
+    private static final Set<String> MEMBER_SORT_FIELDS = Set.of(
+        "id", "name", "email", "age", "createdAt", "updatedAt"
+    );
 
-    public MemberController(MemberService memberService) {
+    public MemberController(MemberService memberService, SortValidator sortValidator) {
         this.memberService = memberService;
+        this.sortValidator = sortValidator;
     }
 
     @Operation(summary = "회원 등록", description = "이름, 이메일, 나이를 입력받아 새 회원을 등록합니다.")
@@ -66,6 +73,7 @@ public class MemberController {
         @PageableDefault(size = 10, sort = "id", direction = Direction.DESC)
         Pageable pageable
     ) {
+        sortValidator.validate(pageable, MEMBER_SORT_FIELDS);
 
         Page<MemberResponse> members = memberService.findMembers(pageable)
             .map(MemberResponse::new);
@@ -109,6 +117,8 @@ public class MemberController {
         @ModelAttribute MemberSearchRequest request,
         @PageableDefault(size = 10, sort = "id", direction = Direction.DESC)
         Pageable pageable) {
+        sortValidator.validate(pageable, MEMBER_SORT_FIELDS);
+
         Page<MemberResponse> members = memberService.searchMembers(
             request.getName(),
             request.getEmail(),

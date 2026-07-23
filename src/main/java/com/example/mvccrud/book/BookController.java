@@ -2,10 +2,12 @@ package com.example.mvccrud.book;
 
 import com.example.mvccrud.global.ApiResponse;
 import com.example.mvccrud.global.PageResponse;
+import com.example.mvccrud.global.SortValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -30,8 +32,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class BookController {
 
     private final BookService bookService;
+    private final SortValidator sortValidator;
+    private static final Set<String> BOOK_SORT_FIELDS = Set.of("id", "title", "price", "createdAt",
+        "updatedAt");
 
-    public BookController(BookService bookService) {
+    public BookController(BookService bookService, SortValidator sortValidator) {
+        this.sortValidator = sortValidator;
         this.bookService = bookService;
     }
 
@@ -60,6 +66,8 @@ public class BookController {
     public ApiResponse<PageResponse<BookResponse>> findBooks(
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC)
         Pageable pageable) {
+        sortValidator.validate(pageable, BOOK_SORT_FIELDS);
+
         Page<BookResponse> books = bookService.findBooks(pageable)
             .map(BookResponse::new);
 
@@ -100,6 +108,7 @@ public class BookController {
         @ModelAttribute BookSearchRequest request,
         @PageableDefault(size = 10, sort = "id", direction = Direction.DESC)
         Pageable pageable) {
+        sortValidator.validate(pageable, BOOK_SORT_FIELDS);
 
         Page<BookResponse> books = bookService.searchBooks(
             request.getTitle(),
