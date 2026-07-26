@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mvccrud.global.GlobalExceptionHandler;
+import com.example.mvccrud.global.SortValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
@@ -24,7 +25,8 @@ class MemberControllerTest {
     void setUp() {
         MemberRepository memberRepository = new MemoryMemberRepository();
         MemberService memberService = new MemberService(memberRepository);
-        MemberController memberController = new MemberController(memberService);
+        MemberController memberController = new MemberController(memberService,
+            new SortValidator());
 
         mockMvc = MockMvcBuilders
             .standaloneSetup(memberController)

@@ -3,6 +3,7 @@ package com.example.mvccrud.book;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import com.example.mvccrud.global.GlobalExceptionHandler;
+import com.example.mvccrud.global.SortValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
@@ -21,7 +22,7 @@ class BookControllerTest {
     void setUp() {
         BookRepository bookRepository = new MemoryBookRepository();
         BookService bookService = new BookService(bookRepository);
-        BookController bookController = new BookController(bookService);
+        BookController bookController = new BookController(bookService, new SortValidator());
 
         mockMvc = MockMvcBuilders
             .standaloneSetup(bookController)

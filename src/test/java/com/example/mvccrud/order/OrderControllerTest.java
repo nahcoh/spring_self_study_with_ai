@@ -9,6 +9,7 @@ import com.example.mvccrud.book.BookController;
 import com.example.mvccrud.book.BookService;
 import com.example.mvccrud.book.MemoryBookRepository;
 import com.example.mvccrud.global.GlobalExceptionHandler;
+import com.example.mvccrud.global.SortValidator;
 import com.example.mvccrud.member.MemberController;
 import com.example.mvccrud.member.MemberService;
 import com.example.mvccrud.member.MemoryMemberRepository;
@@ -36,9 +37,9 @@ class OrderControllerTest {
         BookService bookService = new BookService(bookRepository);
         OrderService orderService = new OrderService(orderRepository, memberService, bookService);
 
-        MemberController memberController = new MemberController(memberService);
-        BookController bookController = new BookController(bookService);
-        OrderController orderController = new OrderController(orderService);
+        MemberController memberController = new MemberController(memberService, new SortValidator());
+        BookController bookController = new BookController(bookService, new SortValidator());
+        OrderController orderController = new OrderController(orderService, new SortValidator());
 
         mockMvc = MockMvcBuilders
             .standaloneSetup(memberController, bookController, orderController)
