@@ -2302,3 +2302,21 @@ private String title;
 
 주문에서 참조 중인 책을 삭제하면 외래키 제약조건 때문에 삭제할 수 없다.  
 이 경우 `DataIntegrityViolationException`을 처리하여 `409 Conflict`를 반환한다.
+
+`BookResponse`는 Redis JSON 역직렬화가 가능하도록 record로 변경했다. record는 값 전달용 DTO에 적합하며, 필드 기반 생성자가 자동으로 제공되어 JSON 데이터를 객체로 복원하기 쉽다.
+
+
+## Docker Compose 실행
+
+이 프로젝트는 Docker Compose를 통해 Spring Boot 애플리케이션, MySQL, Redis를 함께 실행할 수 있다.
+
+### 구성 서비스
+
+- `app`: Spring Boot API 서버
+- `mysql`: MySQL 데이터베이스
+- `redis`: Redis 캐시 서버
+
+### 실행 방법
+
+```bash
+docker compose up -d --build

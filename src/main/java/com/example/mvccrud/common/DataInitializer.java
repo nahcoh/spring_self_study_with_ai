@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile({"dev","mysql"})
+@Profile({"dev","mysql","docker"})
 public class DataInitializer implements CommandLineRunner {
 
     private final MemberService memberService;
