@@ -2269,3 +2269,36 @@ private String title;
 - `@Tag`로 API 그룹을 나눌 수 있다.
 - DTO 필드에 `@Schema`를 붙여 요청/응답 스키마 설명을 제공할 수 있다.
 - Postman 없이 브라우저에서 API를 테스트할 수 있다.
+
+
+## Redis 캐시 적용
+
+### 적용 대상
+
+- `GET /books/{id}` 책 단건 조회 API
+
+### 적용 이유
+
+자주 조회되는 책 상세 정보를 Redis에 캐싱하여 반복 조회 시 MySQL 접근을 줄이기 위해 적용했다.
+
+### 동작 흐름
+
+1. 클라이언트가 `GET /books/{id}` 요청
+2. Redis에 `book::{id}` 캐시가 있는지 확인
+3. 캐시가 있으면 Redis에서 바로 반환
+4. 캐시가 없으면 MySQL에서 조회
+5. 조회 결과를 Redis에 저장
+6. 이후 같은 요청은 Redis에서 반환
+
+### 캐시 무효화
+
+책 정보가 수정되거나 삭제되면 기존 캐시가 낡은 데이터가 될 수 있으므로 캐시를 삭제한다.
+
+- `PUT /books/{id}` → `book::{id}` 캐시 삭제
+- `PATCH /books/{id}` → `book::{id}` 캐시 삭제
+- `DELETE /books/{id}` → 삭제 성공 시 `book::{id}` 캐시 삭제
+
+### 예외 처리
+
+주문에서 참조 중인 책을 삭제하면 외래키 제약조건 때문에 삭제할 수 없다.  
+이 경우 `DataIntegrityViolationException`을 처리하여 `409 Conflict`를 반환한다.

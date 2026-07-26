@@ -1,12 +1,13 @@
 package com.example.mvccrud.book;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
 @Getter
-public class BookResponse {
+public class BookResponse implements Serializable {
 
     @Schema(description = "책 ID", example = "1")
     private final Long id;

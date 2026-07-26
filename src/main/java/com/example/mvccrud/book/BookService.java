@@ -1,6 +1,8 @@
 package com.example.mvccrud.book;
 
 import java.util.List;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,14 @@ public class BookService {
             .orElseThrow(BookNotFoundException::new);
     }
 
+    @Cacheable(value = "book", key = "#id")
+    public BookResponse findBookResponse(Long id) {
+        System.out.println("DB 조회 발생: book id = " + id);
+
+        Book book = findBook(id);
+        return new BookResponse(book);
+    }
+
     public List<Book> findBooks() {
         return bookRepository.findAll();
     }
@@ -35,6 +45,7 @@ public class BookService {
         return bookRepository.findAll(pageable);
     }
 
+    @CacheEvict(value = "book", key = "#id")
     @Transactional
     public Book updateBook(Long id, String title, int price) {
         Book book = findBook(id);
@@ -43,6 +54,7 @@ public class BookService {
         return book;
     }
 
+    @CacheEvict(value = "book", key = "#id")
     @Transactional
     public void deleteBook(Long id) {
         if (!bookRepository.existsById(id)) {
@@ -51,6 +63,7 @@ public class BookService {
         bookRepository.deleteById(id);
     }
 
+    @CacheEvict(value = "book", key = "#id")
     @Transactional
     public Book patchBook(Long id, String title, Integer price) {
         Book book = findBook(id);

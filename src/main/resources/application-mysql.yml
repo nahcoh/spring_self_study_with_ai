@@ -22,6 +22,12 @@ spring:
         default-page-size: 10
         one-indexed-parameters: false
 
+    redis:
+      host: localhost
+      port: 6379
+  cache:
+    type: redis
+
 logging:
   level:
     org.hibernate.SQL: debug

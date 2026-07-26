@@ -5,6 +5,7 @@ import com.example.mvccrud.member.DuplicateEmailException;
 import com.example.mvccrud.member.MemberNotFoundException;
 import com.example.mvccrud.order.OrderNotFoundException;
 import java.util.List;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -78,4 +79,13 @@ public class GlobalExceptionHandler {
             .body(response);
     }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(
+        DataIntegrityViolationException e) {
+
+        ErrorResponse response = new ErrorResponse(HttpStatus.CONFLICT.value(),
+            "참조 중인 데이터가 있어서 삭제할 수 없습니다.");
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
 }

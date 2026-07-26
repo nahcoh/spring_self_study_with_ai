@@ -57,9 +57,11 @@ public class BookController {
     @Operation(summary = "책 단건 조회", description = "ID로 책 한 권을 조회합니다.")
     @GetMapping("/{id}")
     public ApiResponse<BookResponse> findBook(@PathVariable Long id) {
-        Book book = bookService.findBook(id);
-        return ApiResponse.of(new BookResponse(book));
+        BookResponse book = bookService.findBookResponse(id);
+        return ApiResponse.of(book);
     }
+
+
 
     @Operation(summary = "책 목록 조회", description = "책 목록을 페이징과 정렬 조건으로 조회합니다.")
     @GetMapping
