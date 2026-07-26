@@ -2,7 +2,7 @@
 
 Spring MVC 기반의 CRUD REST API를 직접 구현하면서 백엔드 기본 구조를 연습한 프로젝트다.
 
-처음에는 `MemoryRepository` 기반으로 시작했고, 이후 Spring Data JPA와 H2 Database를 적용하여 실제 DB 기반 구조로 전환했다.  
+처음에는 `MemoryRepository` 기반으로 시작했고, 이후 Spring Data JPA와 H2 Database를 적용하여 실제 DB 기반 구조로 전환했다.
 현재는 Book, Member, Order 도메인에 대해 CRUD, 검색, 페이징, 정렬, 예외 처리, Validation, 테스트까지 적용되어 있다.
 
 ---
@@ -13,38 +13,38 @@ Spring MVC 기반의 CRUD REST API를 직접 구현하면서 백엔드 기본 �
 
 주요 학습 목표는 다음과 같다.
 
-- Controller, Service, Repository 계층 구조 이해
-- REST API 요청/응답 흐름 이해
-- Request DTO, Response DTO 분리
-- 공통 응답 구조 적용
-- Bean Validation 적용
-- Global Exception Handling 적용
-- HTTP Status Code 정리
-- PUT과 PATCH 차이 이해
-- MemoryRepository에서 JPA Repository로 전환
-- JPA Entity 매핑
-- JPA 변경 감지와 트랜잭션 이해
-- `@ManyToOne` 연관관계 적용
-- JPQL 검색 기능 구현
-- Pageable 기반 페이징/정렬 구현
-- Service Test, Controller Test, JPA Integration Test 작성
+* Controller, Service, Repository 계층 구조 이해
+* REST API 요청/응답 흐름 이해
+* Request DTO, Response DTO 분리
+* 공통 응답 구조 적용
+* Bean Validation 적용
+* Global Exception Handling 적용
+* HTTP Status Code 정리
+* PUT과 PATCH 차이 이해
+* MemoryRepository에서 JPA Repository로 전환
+* JPA Entity 매핑
+* JPA 변경 감지와 트랜잭션 이해
+* `@ManyToOne` 연관관계 적용
+* JPQL 검색 기능 구현
+* Pageable 기반 페이징/정렬 구현
+* Service Test, Controller Test, JPA Integration Test 작성
 
 ---
 
 ## 2. 기술 스택
 
-- Java 17
-- Spring Boot
-- Spring Web MVC
-- Spring Data JPA
-- H2 Database
-- Hibernate
-- Bean Validation
-- Lombok
-- JUnit 5
-- AssertJ
-- MockMvc
-- Gradle
+* Java 17
+* Spring Boot
+* Spring Web MVC
+* Spring Data JPA
+* H2 Database
+* Hibernate
+* Bean Validation
+* Lombok
+* JUnit 5
+* AssertJ
+* MockMvc
+* Gradle
 
 ---
 
@@ -52,40 +52,40 @@ Spring MVC 기반의 CRUD REST API를 직접 구현하면서 백엔드 기본 �
 
 ### Book
 
-- 책 등록
-- 책 단건 조회
-- 책 목록 조회
-- 책 수정
-- 책 부분 수정
-- 책 삭제
-- 책 검색
-- 책 목록 페이징/정렬
-- 책 검색 결과 페이징/정렬
+* 책 등록
+* 책 단건 조회
+* 책 목록 조회
+* 책 수정
+* 책 부분 수정
+* 책 삭제
+* 책 검색
+* 책 목록 페이징/정렬
+* 책 검색 결과 페이징/정렬
 
 ### Member
 
-- 회원 등록
-- 회원 단건 조회
-- 회원 목록 조회
-- 회원 수정
-- 회원 부분 수정
-- 회원 삭제
-- 이메일 중복 검사
-- 회원 검색
-- 회원 목록 페이징/정렬
-- 회원 검색 결과 페이징/정렬
+* 회원 등록
+* 회원 단건 조회
+* 회원 목록 조회
+* 회원 수정
+* 회원 부분 수정
+* 회원 삭제
+* 이메일 중복 검사
+* 회원 검색
+* 회원 목록 페이징/정렬
+* 회원 검색 결과 페이징/정렬
 
 ### Order
 
-- 주문 생성
-- 주문 단건 조회
-- 주문 목록 조회
-- 주문 취소
-- 취소된 주문 재취소 방지
-- 주문 검색
-- 주문 목록 페이징/정렬
-- 주문 검색 결과 페이징/정렬
-- Member, Book과 `@ManyToOne` 연관관계 적용
+* 주문 생성
+* 주문 단건 조회
+* 주문 목록 조회
+* 주문 취소
+* 취소된 주문 재취소 방지
+* 주문 검색
+* 주문 목록 페이징/정렬
+* 주문 검색 결과 페이징/정렬
+* Member, Book과 `@ManyToOne` 연관관계 적용
 
 ---
 
@@ -200,10 +200,10 @@ dev 프로필에서는 `DataInitializer`를 통해 더미 데이터를 자동으
 
 예시 데이터:
 
-- 회원 5명
-- 책 10권
-- 주문 10건
-- 일부 주문은 `CANCELED` 상태
+* 회원 5명
+* 책 10권
+* 주문 10건
+* 일부 주문은 `CANCELED` 상태
 
 중복 삽입 방지를 위해 기존 회원 데이터가 있으면 더미 데이터를 다시 넣지 않는다.
 
@@ -238,8 +238,8 @@ changePrice()
 
 검증 조건:
 
-- 제목은 필수
-- 가격은 1원 이상
+* 제목은 필수
+* 가격은 1원 이상
 
 ---
 
@@ -439,11 +439,11 @@ changeAge()
 
 검증 조건:
 
-- 이름은 필수
-- 이메일은 필수
-- 이메일 형식 검증
-- 나이는 1 이상
-- 이메일은 중복될 수 없음
+* 이름은 필수
+* 이메일은 필수
+* 이메일 형식 검증
+* 나이는 1 이상
+* 이메일은 중복될 수 없음
 
 ---
 
@@ -643,11 +643,11 @@ getBookId()
 
 검증 조건:
 
-- 회원은 필수
-- 책은 필수
-- 주문 수량은 1 이상
-- 주문 가격은 1원 이상
-- 이미 취소된 주문은 다시 취소할 수 없음
+* 회원은 필수
+* 책은 필수
+* 주문 수량은 1 이상
+* 주문 가격은 1원 이상
+* 이미 취소된 주문은 다시 취소할 수 없음
 
 ---
 
@@ -674,7 +674,7 @@ Order 1개 → Member 1명
 Order 1개 → Book 1권
 ```
 
-현재 프로젝트에서는 주문 하나가 책 한 종류만 담는 단순 구조다.  
+현재 프로젝트에서는 주문 하나가 책 한 종류만 담는 단순 구조다.
 실무처럼 주문 하나에 여러 책을 담으려면 `OrderItem` 중간 엔티티를 추가하는 구조가 더 적합하다.
 
 ---
@@ -881,13 +881,13 @@ HTTP 요청을 받는다.
 
 역할:
 
-- URL 매핑
-- Request DTO 받기
-- Validation 적용
-- Pageable 요청 받기
-- Service 호출
-- Response DTO 반환
-- HTTP Status Code 반환
+* URL 매핑
+* Request DTO 받기
+* Validation 적용
+* Pageable 요청 받기
+* Service 호출
+* Response DTO 반환
+* HTTP Status Code 반환
 
 ---
 
@@ -897,18 +897,18 @@ HTTP 요청을 받는다.
 
 역할:
 
-- 등록
-- 조회
-- 목록 조회
-- 수정
-- 부분 수정
-- 삭제
-- 검색
-- 페이징 조회
-- 주문 생성
-- 주문 취소
-- 예외 처리
-- 트랜잭션 관리
+* 등록
+* 조회
+* 목록 조회
+* 수정
+* 부분 수정
+* 삭제
+* 검색
+* 페이징 조회
+* 주문 생성
+* 주문 취소
+* 예외 처리
+* 트랜잭션 관리
 
 ---
 
@@ -942,25 +942,25 @@ API 요청과 응답에서 Entity를 직접 사용하지 않기 위해 DTO를 �
 
 사용한 Book DTO:
 
-- `BookCreateRequest`
-- `BookUpdateRequest`
-- `BookPatchRequest`
-- `BookSearchRequest`
-- `BookResponse`
+* `BookCreateRequest`
+* `BookUpdateRequest`
+* `BookPatchRequest`
+* `BookSearchRequest`
+* `BookResponse`
 
 사용한 Member DTO:
 
-- `MemberCreateRequest`
-- `MemberUpdateRequest`
-- `MemberPatchRequest`
-- `MemberSearchRequest`
-- `MemberResponse`
+* `MemberCreateRequest`
+* `MemberUpdateRequest`
+* `MemberPatchRequest`
+* `MemberSearchRequest`
+* `MemberResponse`
 
 사용한 Order DTO:
 
-- `OrderCreateRequest`
-- `OrderSearchRequest`
-- `OrderResponse`
+* `OrderCreateRequest`
+* `OrderSearchRequest`
+* `OrderResponse`
 
 DTO를 사용하면 API 스펙과 내부 Entity 모델을 분리할 수 있다.
 
@@ -997,13 +997,13 @@ private Long memberId;
 
 처리한 예외:
 
-- `BookNotFoundException`
-- `MemberNotFoundException`
-- `OrderNotFoundException`
-- `DuplicateEmailException`
-- `MethodArgumentNotValidException`
-- `IllegalArgumentException`
-- `IllegalStateException`
+* `BookNotFoundException`
+* `MemberNotFoundException`
+* `OrderNotFoundException`
+* `DuplicateEmailException`
+* `MethodArgumentNotValidException`
+* `IllegalArgumentException`
+* `IllegalStateException`
 
 ---
 
@@ -1094,12 +1094,12 @@ private Long memberId;
 
 전환 목적:
 
-- 메모리 저장소에서 DB 저장소로 구조 확장
-- Repository 인터페이스를 유지하면서 구현체만 교체
-- JPA Entity 매핑 학습
-- JPA 변경 감지 학습
-- 트랜잭션 동작 학습
-- 통합 테스트를 통해 실제 DB 저장/조회/수정/삭제 검증
+* 메모리 저장소에서 DB 저장소로 구조 확장
+* Repository 인터페이스를 유지하면서 구현체만 교체
+* JPA Entity 매핑 학습
+* JPA 변경 감지 학습
+* 트랜잭션 동작 학습
+* 통합 테스트를 통해 실제 DB 저장/조회/수정/삭제 검증
 
 ---
 
@@ -1416,18 +1416,18 @@ public Page<Order> search(Long memberId, OrderStatus status, Pageable pageable) 
 
 검증 내용:
 
-- 책 등록
-- 책 단건 조회
-- 없는 책 조회 실패
-- 책 전체 조회
-- PUT 전체 수정
-- PATCH 제목만 수정
-- PATCH 가격만 수정
-- 책 삭제
-- 없는 책 삭제 실패
-- 제목 검색
-- 가격 범위 검색
-- 제목 + 가격 검색
+* 책 등록
+* 책 단건 조회
+* 없는 책 조회 실패
+* 책 전체 조회
+* PUT 전체 수정
+* PATCH 제목만 수정
+* PATCH 가격만 수정
+* 책 삭제
+* 없는 책 삭제 실패
+* 제목 검색
+* 가격 범위 검색
+* 제목 + 가격 검색
 
 ---
 
@@ -1435,22 +1435,22 @@ public Page<Order> search(Long memberId, OrderStatus status, Pageable pageable) 
 
 검증 내용:
 
-- 회원 등록
-- 이메일 중복 등록 실패
-- 회원 단건 조회
-- 없는 회원 조회 실패
-- 회원 전체 조회
-- PUT 전체 수정
-- PUT 이메일 중복 수정 실패
-- PATCH 이름만 수정
-- PATCH 이메일만 수정
-- PATCH 나이만 수정
-- PATCH 이메일 중복 수정 실패
-- 회원 삭제
-- 없는 회원 삭제 실패
-- 이름 검색
-- 이메일 검색
-- 이름 + 이메일 검색
+* 회원 등록
+* 이메일 중복 등록 실패
+* 회원 단건 조회
+* 없는 회원 조회 실패
+* 회원 전체 조회
+* PUT 전체 수정
+* PUT 이메일 중복 수정 실패
+* PATCH 이름만 수정
+* PATCH 이메일만 수정
+* PATCH 나이만 수정
+* PATCH 이메일 중복 수정 실패
+* 회원 삭제
+* 없는 회원 삭제 실패
+* 이름 검색
+* 이메일 검색
+* 이름 + 이메일 검색
 
 ---
 
@@ -1458,17 +1458,17 @@ public Page<Order> search(Long memberId, OrderStatus status, Pageable pageable) 
 
 검증 내용:
 
-- 주문 생성
-- 없는 회원으로 주문 생성 실패
-- 없는 책으로 주문 생성 실패
-- 주문 단건 조회
-- 없는 주문 조회 실패
-- 주문 전체 조회
-- 주문 취소
-- 이미 취소된 주문 다시 취소 실패
-- 회원 ID로 주문 검색
-- 상태로 주문 검색
-- 회원 ID + 상태로 주문 검색
+* 주문 생성
+* 없는 회원으로 주문 생성 실패
+* 없는 책으로 주문 생성 실패
+* 주문 단건 조회
+* 없는 주문 조회 실패
+* 주문 전체 조회
+* 주문 취소
+* 이미 취소된 주문 다시 취소 실패
+* 회원 ID로 주문 검색
+* 상태로 주문 검색
+* 회원 ID + 상태로 주문 검색
 
 ---
 
@@ -1478,18 +1478,18 @@ MockMvc를 사용해 API 요청/응답을 검증했다.
 
 검증 내용:
 
-- 등록 API `201 Created`
-- 단건 조회 API `200 OK`
-- 목록 조회 API `200 OK`
-- 페이징 응답 구조 검증
-- 수정 API `200 OK`
-- 부분 수정 API `200 OK`
-- 삭제 API `204 No Content`
-- 검색 API `200 OK`
-- Validation 실패 `400 Bad Request`
-- 없는 리소스 조회 `404 Not Found`
-- 중복 이메일 `400 Bad Request`
-- 취소된 주문 재취소 `400 Bad Request`
+* 등록 API `201 Created`
+* 단건 조회 API `200 OK`
+* 목록 조회 API `200 OK`
+* 페이징 응답 구조 검증
+* 수정 API `200 OK`
+* 부분 수정 API `200 OK`
+* 삭제 API `204 No Content`
+* 검색 API `200 OK`
+* Validation 실패 `400 Bad Request`
+* 없는 리소스 조회 `404 Not Found`
+* 중복 이메일 `400 Bad Request`
+* 취소된 주문 재취소 `400 Bad Request`
 
 페이징 응답 구조 변경으로 인해 테스트의 JSON 경로도 변경했다.
 
@@ -1529,11 +1529,11 @@ standalone MockMvc 테스트에서는 Pageable을 처리하기 위해 다음 설
 
 검증 내용:
 
-- 책 등록 시 DB 저장
-- 책 조회
-- 책 수정 시 변경 감지 동작
-- 책 삭제
-- 책 검색
+* 책 등록 시 DB 저장
+* 책 조회
+* 책 수정 시 변경 감지 동작
+* 책 삭제
+* 책 검색
 
 ---
 
@@ -1541,12 +1541,12 @@ standalone MockMvc 테스트에서는 Pageable을 처리하기 위해 다음 설
 
 검증 내용:
 
-- 회원 등록 시 DB 저장
-- 회원 조회
-- 이메일 중복 등록 실패
-- 회원 수정 시 변경 감지 동작
-- 회원 삭제
-- 회원 검색
+* 회원 등록 시 DB 저장
+* 회원 조회
+* 이메일 중복 등록 실패
+* 회원 수정 시 변경 감지 동작
+* 회원 삭제
+* 회원 검색
 
 ---
 
@@ -1554,14 +1554,14 @@ standalone MockMvc 테스트에서는 Pageable을 처리하기 위해 다음 설
 
 검증 내용:
 
-- 주문 생성 시 DB 저장
-- 주문 조회
-- 없는 주문 조회 실패
-- 주문 취소 시 상태 변경
-- 취소된 주문 재취소 실패
-- memberId 검색
-- status 검색
-- memberId와 status 복합 검색
+* 주문 생성 시 DB 저장
+* 주문 조회
+* 없는 주문 조회 실패
+* 주문 취소 시 상태 변경
+* 취소된 주문 재취소 실패
+* memberId 검색
+* status 검색
+* memberId와 status 복합 검색
 
 ---
 
@@ -1661,9 +1661,9 @@ Database may be already in use
 
 해결 방법:
 
-- 중복 실행 중인 서버 종료
-- 별도로 실행한 H2 앱 종료
-- Spring Boot 앱에서 제공하는 `/h2-console` 사용
+* 중복 실행 중인 서버 종료
+* 별도로 실행한 H2 앱 종료
+* Spring Boot 앱에서 제공하는 `/h2-console` 사용
 
 ---
 
@@ -1737,26 +1737,26 @@ List<Order> orders = search(memberId, status);
 
 ## 42. 완료된 항목
 
-- Book CRUD API 구현
-- Member CRUD API 구현
-- Order CRUD API 구현
-- Request DTO / Response DTO 적용
-- ApiResponse 공통 응답 구조 적용
-- PageResponse 페이징 응답 구조 적용
-- Bean Validation 적용
-- GlobalExceptionHandler 적용
-- MemoryRepository 기반 구현
-- JPA Repository 기반 전환
-- H2 Database 연동
-- H2 파일 DB dev profile 구성
-- H2 Console 설정
-- 더미 데이터 자동 삽입
-- JPQL 검색 기능 구현
-- Pageable 기반 페이징/정렬 구현
-- Order와 Member, Book 간 `@ManyToOne` 연관관계 적용
-- Controller 단위 테스트 작성
-- 페이징 응답 구조에 맞게 Controller 테스트 수정
-- JPA 통합 테스트 작성
+* Book CRUD API 구현
+* Member CRUD API 구현
+* Order CRUD API 구현
+* Request DTO / Response DTO 적용
+* ApiResponse 공통 응답 구조 적용
+* PageResponse 페이징 응답 구조 적용
+* Bean Validation 적용
+* GlobalExceptionHandler 적용
+* MemoryRepository 기반 구현
+* JPA Repository 기반 전환
+* H2 Database 연동
+* H2 파일 DB dev profile 구성
+* H2 Console 설정
+* 더미 데이터 자동 삽입
+* JPQL 검색 기능 구현
+* Pageable 기반 페이징/정렬 구현
+* Order와 Member, Book 간 `@ManyToOne` 연관관계 적용
+* Controller 단위 테스트 작성
+* 페이징 응답 구조에 맞게 Controller 테스트 수정
+* JPA 통합 테스트 작성
 
 ---
 
@@ -1795,33 +1795,33 @@ Order
 
 ## 44. Spring MVC
 
-- Controller는 HTTP 요청과 응답을 담당한다.
-- Service는 비즈니스 흐름을 담당한다.
-- Repository는 저장소 접근을 담당한다.
-- DTO를 사용하면 API 스펙과 내부 모델을 분리할 수 있다.
-- Validation은 잘못된 요청을 빠르게 막아준다.
-- GlobalExceptionHandler는 예외 응답을 일관되게 만든다.
+* Controller는 HTTP 요청과 응답을 담당한다.
+* Service는 비즈니스 흐름을 담당한다.
+* Repository는 저장소 접근을 담당한다.
+* DTO를 사용하면 API 스펙과 내부 모델을 분리할 수 있다.
+* Validation은 잘못된 요청을 빠르게 막아준다.
+* GlobalExceptionHandler는 예외 응답을 일관되게 만든다.
 
 ---
 
 ## 45. JPA
 
-- Entity는 DB 테이블과 매핑된다.
-- `@Id`, `@GeneratedValue`로 식별자를 관리한다.
-- `@Transactional` 안에서 Entity 값을 변경하면 변경 감지가 동작한다.
-- enum은 `@Enumerated(EnumType.STRING)`으로 저장하는 것이 안전하다.
-- SQL 예약어와 엔티티명이 충돌하면 `@Table`로 테이블명을 지정한다.
-- `@ManyToOne(fetch = FetchType.LAZY)`로 다대일 연관관계를 표현할 수 있다.
+* Entity는 DB 테이블과 매핑된다.
+* `@Id`, `@GeneratedValue`로 식별자를 관리한다.
+* `@Transactional` 안에서 Entity 값을 변경하면 변경 감지가 동작한다.
+* enum은 `@Enumerated(EnumType.STRING)`으로 저장하는 것이 안전하다.
+* SQL 예약어와 엔티티명이 충돌하면 `@Table`로 테이블명을 지정한다.
+* `@ManyToOne(fetch = FetchType.LAZY)`로 다대일 연관관계를 표현할 수 있다.
 
 ---
 
 ## 46. 페이징
 
-- `Pageable`은 요청의 `page`, `size`, `sort` 정보를 담는다.
-- `Page<T>`는 실제 데이터와 페이징 메타데이터를 함께 가진다.
-- `Page.map()`을 사용하면 `Page<Entity>`를 `Page<ResponseDto>`로 변환할 수 있다.
-- API 응답에서는 `PageResponse<T>`로 필요한 정보만 노출한다.
-- MemoryRepository에서는 `PageImpl`로 페이징 결과를 직접 만들어야 한다.
+* `Pageable`은 요청의 `page`, `size`, `sort` 정보를 담는다.
+* `Page<T>`는 실제 데이터와 페이징 메타데이터를 함께 가진다.
+* `Page.map()`을 사용하면 `Page<Entity>`를 `Page<ResponseDto>`로 변환할 수 있다.
+* API 응답에서는 `PageResponse<T>`로 필요한 정보만 노출한다.
+* MemoryRepository에서는 `PageImpl`로 페이징 결과를 직접 만들어야 한다.
 
 ---
 
@@ -1829,21 +1829,21 @@ Order
 
 ## 47. 다음 단계 후보
 
-- `createdAt`, `updatedAt` 추가
-- BaseEntity 도입
-- MySQL 또는 PostgreSQL 연동
-- Docker Compose로 DB 실행 환경 구성
-- Swagger 또는 Spring REST Docs로 API 문서화
-- 인증/인가 적용
-- 로그인 기능 추가
-- 회원별 주문 조회 API 추가
-- 주문 구조를 `OrderItem` 기반으로 확장
-- `@ManyToOne` 연관관계에 대한 fetch join 최적화
-- N+1 문제 실습
-- 페이징 기본값 설정
-- 정렬 가능한 필드 제한
-- API 에러 응답 구조 개선
-- CI 환경에서 테스트 자동 실행
+* `createdAt`, `updatedAt` 추가
+* BaseEntity 도입
+* MySQL 또는 PostgreSQL 연동
+* Docker Compose로 DB 실행 환경 구성
+* Swagger 또는 Spring REST Docs로 API 문서화
+* 인증/인가 적용
+* 로그인 기능 추가
+* 회원별 주문 조회 API 추가
+* 주문 구조를 `OrderItem` 기반으로 확장
+* `@ManyToOne` 연관관계에 대한 fetch join 최적화
+* N+1 문제 실습
+* 페이징 기본값 설정
+* 정렬 가능한 필드 제한
+* API 에러 응답 구조 개선
+* CI 환경에서 테스트 자동 실행
 
 ---
 
@@ -1853,13 +1853,12 @@ Order
 
 예상 학습 내용:
 
-- JPA Auditing
-- `@CreatedDate`
-- `@LastModifiedDate`
-- BaseEntity
-- Entity 공통 필드 분리
-- 테스트에서 시간 필드 검증
-
+* JPA Auditing
+* `@CreatedDate`
+* `@LastModifiedDate`
+* BaseEntity
+* Entity 공통 필드 분리
+* 테스트에서 시간 필드 검증
 
 # JPA Auditing
 
@@ -1874,7 +1873,7 @@ createdAt
 updatedAt
 ```
 
-`createdAt`은 Entity가 처음 저장될 때 자동으로 입력되고,  
+`createdAt`은 Entity가 처음 저장될 때 자동으로 입력되고,
 `updatedAt`은 Entity가 수정될 때 자동으로 갱신된다.
 
 ---
@@ -1897,7 +1896,7 @@ public abstract class BaseEntity {
 }
 ```
 
-`@MappedSuperclass`를 사용했기 때문에 `BaseEntity` 자체는 테이블로 생성되지 않고,  
+`@MappedSuperclass`를 사용했기 때문에 `BaseEntity` 자체는 테이블로 생성되지 않고,
 이를 상속한 Entity의 테이블에 `created_at`, `updated_at` 컬럼이 추가된다.
 
 ---
@@ -2031,12 +2030,12 @@ SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 
 ## JPA Auditing으로 배운 점
 
-- 공통 필드는 `BaseEntity`로 분리할 수 있다.
-- `@MappedSuperclass`는 부모 클래스의 필드를 자식 Entity 테이블에 포함시킨다.
-- `@CreatedDate`는 생성 시간을 자동 저장한다.
-- `@LastModifiedDate`는 수정 시간을 자동 갱신한다.
-- JPA Auditing을 사용하려면 `@EnableJpaAuditing`이 필요하다.
-- 기존 DB 데이터에는 새로 추가한 시간 컬럼이 `null`일 수 있다.
+* 공통 필드는 `BaseEntity`로 분리할 수 있다.
+* `@MappedSuperclass`는 부모 클래스의 필드를 자식 Entity 테이블에 포함시킨다.
+* `@CreatedDate`는 생성 시간을 자동 저장한다.
+* `@LastModifiedDate`는 수정 시간을 자동 갱신한다.
+* JPA Auditing을 사용하려면 `@EnableJpaAuditing`이 필요하다.
+* 기존 DB 데이터에는 새로 추가한 시간 컬럼이 `null`일 수 있다.
 
 ---
 
@@ -2200,52 +2199,74 @@ docker compose down -v
 
 ## MySQL 적용으로 배운 점
 
-- Docker Compose로 로컬 DB 환경을 구성할 수 있다.
-- H2와 MySQL을 Spring Profile로 분리할 수 있다.
-- `application-dev.yml`, `application-mysql.yml`처럼 환경별 설정을 나눌 수 있다.
-- MySQL 컨테이너가 완전히 준비되기 전에는 Spring Boot 연결이 실패할 수 있다.
-- `docker logs`로 DB 준비 상태를 확인할 수 있다.
-- JPA Entity와 Repository 코드는 그대로 두고 DB만 교체할 수 있다.
+* Docker Compose로 로컬 DB 환경을 구성할 수 있다.
 
+* H2와 MySQL을 Spring Profile로 분리할 수 있다.
 
-- Docker Compose 기반 MySQL 실행 환경 구성
-- mysql profile 추가
-- H2 / MySQL 환경 분리
-- MySQL 환경에서 JPA 동작 확인
-- MySQL 환경에서 Postman API 테스트 완료
+* `application-dev.yml`, `application-mysql.yml`처럼 환경별 설정을 나눌 수 있다.
+
+* MySQL 컨테이너가 완전히 준비되기 전에는 Spring Boot 연결이 실패할 수 있다.
+
+* `docker logs`로 DB 준비 상태를 확인할 수 있다.
+
+* JPA Entity와 Repository 코드는 그대로 두고 DB만 교체할 수 있다.
+
+* Docker Compose 기반 MySQL 실행 환경 구성
+
+* mysql profile 추가
+
+* H2 / MySQL 환경 분리
+
+* MySQL 환경에서 JPA 동작 확인
+
+* MySQL 환경에서 Postman API 테스트 완료
 
 #Swagger / OpenAPI
+
 ## Swagger 적용
+
 API 문서화를 위해 SpringDoc OpenAPI를 적용했다.
 
 Swagger UI를 통해 Book, Member, Order API의 요청/응답 구조를 확인하고 직접 테스트할 수 있다.
 
 ---
+
 ## Swagger UI 접속
-서버 실행 후 아래 주소로 접속한다. 
+
+서버 실행 후 아래 주소로 접속한다.
+
 ```text
 http://localhost:8080/swagger-ui/index.html
 ```
+
 OpenAPI JSON 문서는 아래 주소에서 확인할 수 있다.
+
 ```text
 http://localhost:8080/v3/api-docs
 ```
----
-## 적용 내용
-- Swagger UI 추가
-- OpenAPI 문서 제목, 설명, 버전 설정
-- Controller별 API 그룹화
-- API별 설명 추가 
-- Request DTO / Response DTO 필드 설명 추가
 
 ---
+
+## 적용 내용
+
+* Swagger UI 추가
+* OpenAPI 문서 제목, 설명, 버전 설정
+* Controller별 API 그룹화
+* API별 설명 추가
+* Request DTO / Response DTO 필드 설명 추가
+
+---
+
 ## API 그룹
+
 ```text
 Book API
 Member API
 Order API
 ```
+
 ## 예시
+
 ```java
 @Tag(name = "Book API", description = "책 등록, 조회, 수정, 삭제, 검색 API")
 @RestController
@@ -2253,29 +2274,32 @@ Order API
 public class BookController {
 }
 ```
+
 ```java
 @Operation(summary = "책 등록", description = "책 제목과 가격을 입력받아 새 책을 등록합니다.")
 @PostMapping
 public ResponseEntity<ApiResponse<BookResponse>> createBook(...){
 }
 ```
+
 ```java
 @Schema(description = "책 제목", example = "데미안")
 private String title;
 ```
-## Swagger 적용으로 배운 점
-- SpringDoc OpenAPI로 API 문서를 자동 생성할 수 있다.
-- Controller의 `@Operation`으로 API설명을 추가할 수 있다.
-- `@Tag`로 API 그룹을 나눌 수 있다.
-- DTO 필드에 `@Schema`를 붙여 요청/응답 스키마 설명을 제공할 수 있다.
-- Postman 없이 브라우저에서 API를 테스트할 수 있다.
 
+## Swagger 적용으로 배운 점
+
+* SpringDoc OpenAPI로 API 문서를 자동 생성할 수 있다.
+* Controller의 `@Operation`으로 API설명을 추가할 수 있다.
+* `@Tag`로 API 그룹을 나눌 수 있다.
+* DTO 필드에 `@Schema`를 붙여 요청/응답 스키마 설명을 제공할 수 있다.
+* Postman 없이 브라우저에서 API를 테스트할 수 있다.
 
 ## Redis 캐시 적용
 
 ### 적용 대상
 
-- `GET /books/{id}` 책 단건 조회 API
+* `GET /books/{id}` 책 단건 조회 API
 
 ### 적용 이유
 
@@ -2294,17 +2318,16 @@ private String title;
 
 책 정보가 수정되거나 삭제되면 기존 캐시가 낡은 데이터가 될 수 있으므로 캐시를 삭제한다.
 
-- `PUT /books/{id}` → `book::{id}` 캐시 삭제
-- `PATCH /books/{id}` → `book::{id}` 캐시 삭제
-- `DELETE /books/{id}` → 삭제 성공 시 `book::{id}` 캐시 삭제
+* `PUT /books/{id}` → `book::{id}` 캐시 삭제
+* `PATCH /books/{id}` → `book::{id}` 캐시 삭제
+* `DELETE /books/{id}` → 삭제 성공 시 `book::{id}` 캐시 삭제
 
 ### 예외 처리
 
-주문에서 참조 중인 책을 삭제하면 외래키 제약조건 때문에 삭제할 수 없다.  
+주문에서 참조 중인 책을 삭제하면 외래키 제약조건 때문에 삭제할 수 없다.
 이 경우 `DataIntegrityViolationException`을 처리하여 `409 Conflict`를 반환한다.
 
 `BookResponse`는 Redis JSON 역직렬화가 가능하도록 record로 변경했다. record는 값 전달용 DTO에 적합하며, 필드 기반 생성자가 자동으로 제공되어 JSON 데이터를 객체로 복원하기 쉽다.
-
 
 ## Docker Compose 실행
 
@@ -2312,11 +2335,12 @@ private String title;
 
 ### 구성 서비스
 
-- `app`: Spring Boot API 서버
-- `mysql`: MySQL 데이터베이스
-- `redis`: Redis 캐시 서버
+* `app`: Spring Boot API 서버
+* `mysql`: MySQL 데이터베이스
+* `redis`: Redis 캐시 서버
 
 ### 실행 방법
 
 ```bash
 docker compose up -d --build
+```
