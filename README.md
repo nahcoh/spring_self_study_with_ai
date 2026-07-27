@@ -1618,3 +1618,13 @@ mvc_crud
 - 캐시 대상 확장
 - API 에러 응답 구조 추가 개선
 - Kubernetes 맛보기
+
+
+## Actuator Health Check
+
+Spring Boot Actuator를 추가하여 애플리케이션 상태 확인 API를 제공한다.
+
+### Health Check
+
+```http
+GET /actuator/health
