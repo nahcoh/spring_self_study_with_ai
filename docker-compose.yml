@@ -31,6 +31,7 @@ services:
       retries: 10
 
   app:
+    image: ghcr.io/nahcoh/spring_self_study_with_ai:latest
     build: .
     container_name: mvc-crud-app
     restart: unless-stopped
