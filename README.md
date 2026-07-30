@@ -458,6 +458,24 @@ sudo systemctl restart nginx
 ```
 적용 후 보안 그룹에서 8080 포트를 닫고, 80 포트만 외부에 공개했다.
 
+## Docker Restart Policy
+EC2 재부팅 이후에도 컨테이너가 자동으로 다시 실행되도록 Docker Compose 서비스에 restart policy를 적용했다.
+```yaml
+restart: unless-stopped
+```
+적용 대상:
+- app
+- mysql
+- redis
+재부팅 테스트 결과, EC2 재시작 후 세 컨테이너가 모두 자동으로 복구되는 것을 확인했다.
+```text
+mvc-crud-app    Up
+mvc-crud-mysql  Up healthy
+mvc-crud-redis  Up healthy
+```
+이를 통해 EC2 재부팅이나 Docker daemon 재시작 상황에서도 애플리케이션이 자동 복구될 수 있도록 기본 안정성을 확보했다.
+
+
 
 
 ### 배포 구성
