@@ -36,4 +36,17 @@ out/
 ### VS Code ###
 .vscode/
 
-/data/
+/data/*.pem
+
+# Local database files
+data
+
+# AWS key files
+*.pen
+*.epm
+
+# Local database files
+data
+
+# AWS key files
+*.pem
