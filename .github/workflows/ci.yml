@@ -1,12 +1,12 @@
-name: Java CI
+name: Java CI/CD
 
 on:
   push:
     branches:
       - main
-    pull_request:
-      branches:
-        - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   test:
@@ -38,10 +38,10 @@ jobs:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secret.EC2_HOST}}
-          username: ${{ secret.EC2_USER}}
-          key: ${{ secrets.EC2_SSH_KEY}}
-          script:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
             cd ~/spring_self_study_with_ai
             git pull origin main
             docker compose up -d --build
