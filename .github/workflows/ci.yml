@@ -57,7 +57,7 @@ jobs:
         with:
           context: .true
           push: true
-          tage: |
+          tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
