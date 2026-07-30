@@ -406,6 +406,60 @@ GET /actuator/health/readiness
 
 AWS EC2 Ubuntu 서버에 Docker Compose 기반으로 애플리케이션을 배포했습니다.
 
+### Nginx Reverse Proxy
+
+외부 사용자가 Spring Boot의 8080 포트에 직접 접근하지 않도록 Nginx Reverse Proxy를 적용했다.
+
+기존 접근 방식:
+
+```text
+http://<EC2_PUBLIC_IP>:8080
+```
+변경 후 접근 방식:
+```text
+http://<EC2_PUBLIC_IP>
+```
+구조:
+```text
+Client
+  ↓
+Nginx :80
+  ↓
+Spring Boot App :8080
+```
+Nginx 설정 파일:
+```text
+/etc/nginx/sites-available/mvc-crud
+```
+주요 설정:
+```text
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://localhost:8080;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+설정 적용:
+```text
+sudo ln -s /etc/nginx/sites-available/mvc-crud /etc/nginx/sites-enabled/mvc-crud
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl restart nginx
+```
+적용 후 보안 그룹에서 8080 포트를 닫고, 80 포트만 외부에 공개했다.
+
+
+
 ### 배포 구성
 
 - EC2 Ubuntu 24.04

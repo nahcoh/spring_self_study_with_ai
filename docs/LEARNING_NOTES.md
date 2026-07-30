@@ -1297,6 +1297,44 @@ data/
 - `git status`에서 untracked 파일을 항상 확인해야 한다.
 - 실수로 `git add .`를 하기 전에 민감한 파일이 포함되어 있는지 확인해야 한다.
 
+
+---
+# Nginx Reverse Proxy
+
+EC2에 배포한 Spring Boot 애플리케이션은 기본적으로 8080 포트에서 실행된다.
+
+처음에는 다음 주소로 직접 접근했다.
+```text
+http://<EC2_PUBLIC_IP>:8080
+```
+하지만 운영 환경에서는 애플리케이션 포트를 외부에 직접 노출하기보다 Nginx가 80번 포트에서 요청을 받고 내부의 Srping Boot 8080 포트를 전달하는 구조를 많이 사용한다.
+
+적용 후 구조:
+```text
+Client
+  ↓
+Nginx :80
+  ↓
+Spring Boot :8080
+```
+Nginx 설정 중 오타로 문제가 발생했다.
+
+잘못된 설정: 
+```text
+server_name_
+```
+올바른 설정: 
+```text
+server_name _;
+```
+`server_name`과 `_` 사이에는 공백이 있어야 하고, 마지막에는 세미콜론이 필요하다.
+
+배운 점:
+- Nginx는 Reverse Proxy로 사용할 수 있다. 
+- 외부에는 80 포트만 열고, Spring Boot 8080 포트는 내부에서만 사용하게 만들 수 있다.
+- `sudo nginx -t`로 설정 문법을 검사한 뒤 재시작해야 한다.
+- Nginx설정은 작은 오타 하나로도 실행 실패할 수 있다.
+
 ---
 
 # 29. 현재까지의 한 줄 요약
@@ -1309,7 +1347,6 @@ Spring Boot 기반 CRUD API를 구현하고, JPA/MySQL/Redis/Docker Compose/GitH
 
 # 30. 다음 학습 후보
 
-- Nginx Reverse Proxy 적용
 - HTTPS 적용
 - 운영 DB 분리
 - Docker 이미지 빌드 및 배포 자동화
