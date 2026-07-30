@@ -475,7 +475,24 @@ mvc-crud-redis  Up healthy
 ```
 이를 통해 EC2 재부팅이나 Docker daemon 재시작 상황에서도 애플리케이션이 자동 복구될 수 있도록 기본 안정성을 확보했다.
 
+---
+## Github Actions CD
+Github Actions를 사용해 테스트 자동화뿐 아니라 EC2 자동 배포까지 구성했다.
 
+main 브랜치에 push되면 다음 순서로 동작한다.
+```text
+1. Github Actions에서 테스트 실행
+2. 테스트 성공 시 EC2 서버에 SSH 접속
+3. EC2에서 최신 코드  pull
+4. Docker Compose로 애플리케이션 재빌드 및 재실행
+```
+배포 명령은 GitHub Actions에서 자동으로 실행된다.
+```bash
+cd ~/spring_self_study_with_ai
+git pull origin main
+docker compose up -d --build
+docker image prune -f
+```
 
 
 ### 배포 구성

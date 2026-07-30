@@ -1335,6 +1335,37 @@ server_name _;
 - `sudo nginx -t`로 설정 문법을 검사한 뒤 재시작해야 한다.
 - Nginx설정은 작은 오타 하나로도 실행 실패할 수 있다.
 
+
+---
+# GitHub Actions EC2 자동 배포
+기존에는 EC2에 직접 SSH 접속해서 수동으로 배포했다.
+```bash
+git pull
+docker compose up -d --build
+```
+이를 Github Action workflow에 추가해 main브랜치에 push하면 자동 배포되도록 만들었다.
+
+### 발생한 문제
+처음에는 deploy 단계에서 다음 오류가 발생했다.
+```text
+ssh.ParsePrivateKey: ssh: no key found
+dial tcp ***:22: i/o timeout
+```
+원인은 두 가지였다.
+1. GitHub Secret에 등록한 `EC2_SSH_KEY`값이 올바른 private key 형식이 아니었다.
+2. EC2 보안그룹에서 SSH 22번 포트가 내 IP만 허용되어 있어 GitHub Actions 서버가 접속할 수 없었다.
+
+### 해결 
+- `mvc-crud-key.pem` 내용을 줄바꿈 포함해서 Github Secret에 다시 등록했다.
+- EC2 보안그룹에서 SSH 22번을 GitHub Actions가 접근할 수 있도록 수정했다.
+- workflow에서는 `secrets.EC2_HOST`,`secrets.EC2_USER`,`secrets.EC2_SSH_KEY`를 사용했다.
+
+### 배운 점
+- GitHub Actions에서 EC2로 배포하려면 SSH key를 Github Secrets에 안전하게 저장해야 한다.
+- Secret 이름은 workflow에서 사용하는 이름과 정확히 일치해야 한다.
+- `secret`이 아니라 `secrets`를 사용해야 한다.
+- EC2 보안그룹이 막혀 있으면 workflow에서 SSH 접속이 timeout 된다.
+- CI/CD가 구성되면 push 이후 테스트와 배포가 자동화된다.
 ---
 
 # 29. 현재까지의 한 줄 요약
