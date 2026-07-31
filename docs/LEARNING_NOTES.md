@@ -1367,7 +1367,43 @@ dial tcp ***:22: i/o timeout
 - EC2 보안그룹이 막혀 있으면 workflow에서 SSH 접속이 timeout 된다.
 - CI/CD가 구성되면 push 이후 테스트와 배포가 자동화된다.
 ---
+# GHCR 기반 Docker 이미지 배포
+기존 배포 방식은 EC2 서버에서 직접 Dokcer 이미지를 빌드하는 구조였다.
+```bash
+git pull origin main
+docker compose up -d --build
+```
+이 방식은 단순하지만 EC2 서버에 빌드 부담이 생긴다. 특히 t3.micro처럼 작은 서버에서는 Dokcer build가 메모리와 디스크를 많이 사용할 수 있다.
 
+이를 개선하기 위해 GitHub Actions에서 Dokcer 이미지를 빌즈하고 GitHub Container Registry에 push하도록 변경했다.
+
+변경 후 흐름:
+```text
+1. main 브랜치에 push
+2. GitHub Actions에서 테스트 실행
+3. 테스트 성공 시 Docker 이미지 빌드
+4. GHCR에 latest와 commit sha 태그로 push
+5. EC2에 SSH 접속
+6. docker compose pull app
+7. docker compose up -d
+```
+발생한 문제:
+```text
+unalbe to prepare context: path ".true" not found
+```
+원인:
+`push: true` 또는 `context: .`설정이 잘못 작성되어 build context가 `.true`로 헤석되었다.
+올바른 설정:
+```yaml
+context: .
+push: true
+```
+배운 점:
+- GitHub Actions에서 Docker 이미지를 빌드할 수 있다.
+- GHCR에 이미지를 push하려면 `packages: write`권한이 필요하다.
+- EC2에서 직접 빌드하지 않고 이미지를 pull하는 방식이 더 안정적이다.
+- YAML 오타 하나로 workflow 해석이 완전히 달라질 수 있다.
+---
 # 29. 현재까지의 한 줄 요약
 
 ```text

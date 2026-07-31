@@ -493,6 +493,30 @@ git pull origin main
 docker compose up -d --build
 docker image prune -f
 ```
+---
+## GHCR 기반 Docker 이미지 배포
+기존에는 EC2 서버에서 직접 소스코드를 pull한 뒤 Docker 이미지를 빌드했다.
+
+```text
+EC2
+-> git pull
+-> docker compose up -d --build
+```
+현재는 Github Actions에서 Docker이미지를 빌드하고, Github Container Registry에 push한 뒤 EC2 서버에서는 이미지를 Pull하여 실행한다.
+```text
+GitHub Actions
+-> Test
+-> Docker Image Build
+-> GHCR Push
+-> EC2 Deploy
+-> docker compose pull app
+-> docker compose up -d
+```
+이미지:
+```text
+ghcr.io/nahcoh/spring_self_study_with_ai:latest
+```
+이를 통해 EC2 서버의 빌드 부담을 줄이고, 배포 결과물을 Docker 이미지로 관리할 수 있게 되었다.
 
 
 ### 배포 구성
