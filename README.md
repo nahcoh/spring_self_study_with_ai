@@ -413,7 +413,7 @@ AWS EC2 Ubuntu 서버에 Docker Compose 기반으로 애플리케이션을 배�
 기존 접근 방식:
 
 ```text
-http://<EC2_PUBLIC_IP>:8080
+ http://<EC2_PUBLIC_IP>:8080
 ```
 변경 후 접근 방식:
 ```text
@@ -476,7 +476,7 @@ mvc-crud-redis  Up healthy
 이를 통해 EC2 재부팅이나 Docker daemon 재시작 상황에서도 애플리케이션이 자동 복구될 수 있도록 기본 안정성을 확보했다.
 
 ---
-## Github Actions CD
+## GitHub Actions CD
 Github Actions를 사용해 테스트 자동화뿐 아니라 EC2 자동 배포까지 구성했다.
 
 main 브랜치에 push되면 다음 순서로 동작한다.
@@ -517,8 +517,27 @@ GitHub Actions
 ghcr.io/nahcoh/spring_self_study_with_ai:latest
 ```
 이를 통해 EC2 서버의 빌드 부담을 줄이고, 배포 결과물을 Docker 이미지로 관리할 수 있게 되었다.
+---
+## 로그인 API
+회원 이메일과 비밀번호를 입력받아 로그인 검증을 수행한다.
 
+- 이메일로 회원 조회
+- BCrypt `PasswordEncoder.matches()`를 통한 비밀번호 검증
+- 로그인 실패 시 401 Unauthorized 응답
+- 현재 단계에서는 JWT 발급 전 로그인 검증까지만 구현
 
+### 로그인 요청
+```http
+POST /auth/login
+```
+```json
+{
+  "email": "kim@test.com",
+  "password": "password1234"
+}
+```
+
+---
 ### 배포 구성
 
 - EC2 Ubuntu 24.04

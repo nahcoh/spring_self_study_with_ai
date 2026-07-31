@@ -10,8 +10,9 @@ public record LoginResponse(
     @Schema(description = "이메일", example = "kim@test.com")
     String email,
 
-    @Schema(description = "메시지", example = "로그인 성공")
-    String message) {
+    @Schema(description = "Access Token", example = "eyJhbGciOiJIUzI1NiJ9...")
+    String accessToken
+) {
 
 
 }

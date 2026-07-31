@@ -25,3 +25,7 @@ management:
   endpoint:
     health:
       show-details: never
+
+jwt:
+  secret: "this-is-a-very-long-secret-key-for-jwt-token-signing-practice-2026"
+  access-token-validity-in-seconds: 3600
