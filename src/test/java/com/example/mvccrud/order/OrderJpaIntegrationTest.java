@@ -27,7 +27,7 @@ class OrderJpaIntegrationTest {
     @Test
     public void 주문_생성시_DB에_저장된다() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@teest.com", 30);
+        Member member = memberService.createMember("김철수", "kim@teest.com","password1234", 30);
         Book book = bookService.createBook("데미안", 15000);
         //when
         Order order = orderService.createOrder(member.getId(), book.getId(), 2);
@@ -47,7 +47,7 @@ class OrderJpaIntegrationTest {
     @Test
     public void 주문_조회가_된다() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@teest.com", 30);
+        Member member = memberService.createMember("김철수", "kim@teest.com", "password1234",30);
         Book book = bookService.createBook("데미안", 15000);
         Order order = orderService.createOrder(member.getId(), book.getId(), 2);
         //when
@@ -70,7 +70,7 @@ class OrderJpaIntegrationTest {
     @Test
     public void 주문_취소시_상태가_CANCELED로_변경된다() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@teest.com", 30);
+        Member member = memberService.createMember("김철수", "kim@teest.com", "password1234",30);
         Book book = bookService.createBook("데미안", 15000);
         Order order = orderService.createOrder(member.getId(), book.getId(), 2);
 
@@ -86,7 +86,7 @@ class OrderJpaIntegrationTest {
     @Test
     public void 취소된_주문을_다시_취소하면_실패한다() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@teest.com", 30);
+        Member member = memberService.createMember("김철수", "kim@teest.com", "password1234",30);
         Book book = bookService.createBook("데미안", 15000);
         Order order = orderService.createOrder(member.getId(), book.getId(), 2);
         //when
@@ -102,8 +102,8 @@ class OrderJpaIntegrationTest {
     @Test
     public void memberId로_주문_검색이_된다() throws Exception{
         //given
-        Member member1 = memberService.createMember("김철수", "kim@test.com", 30);
-        Member member2 = memberService.createMember("이영희", "lee@test.com", 20);
+        Member member1 = memberService.createMember("김철수", "kim@teest.com", "password1234",30);
+        Member member2 = memberService.createMember("이영희", "lee@test.com", "password", 20);
 
         Book book = bookService.createBook("데미안", 15000);
 
@@ -123,7 +123,7 @@ class OrderJpaIntegrationTest {
     @Test
     public void status로_주문_검색이_된다() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = memberService.createMember("김철수", "kim@teest.com", "password1234",30);
         Book book = bookService.createBook("데미안", 15000);
 
         Order order1 = orderService.createOrder(member.getId(), book.getId(), 2);
@@ -142,8 +142,8 @@ class OrderJpaIntegrationTest {
     @Test
     public void memberId와_status로_주문_검색이_된다() throws Exception{
         //given
-        Member member1 = memberService.createMember("김철수", "kim@test.com", 30);
-        Member member2 = memberService.createMember("이영희", "lee@test.com", 20);
+        Member member1 = memberService.createMember("김철수", "kim@teest.com", "password1234",30);
+        Member member2 = memberService.createMember("이영희", "lee@test.com", "password",20);
         Book book = bookService.createBook("데미안", 15000);
 
         Order order1 = orderService.createOrder(member1.getId(), book.getId(), 2);

@@ -34,11 +34,11 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        Member member1 = memberService.createMember("김철수", "kim@test.com", 30);
-        Member member2 = memberService.createMember("이영희", "lee@test.com", 25);
-        Member member3 = memberService.createMember("박민수", "park@test.com", 28);
-        Member member4 = memberService.createMember("최지은", "choi@test.com", 32);
-        Member member5 = memberService.createMember("정현우", "jung@test.com", 27);
+        Member member1 = memberService.createMember("김철수", "kim@test.com", "password1234", 30);
+        Member member2 = memberService.createMember("이영희", "lee@test.com", "password1234", 25);
+        Member member3 = memberService.createMember("박민수", "park@test.com", "password1234", 28);
+        Member member4 = memberService.createMember("최지은", "choi@test.com", "password1234", 32);
+        Member member5 = memberService.createMember("정현우", "jung@test.com", "password1234", 27);
 
         Book book1 = bookService.createBook("데미안", 15000);
         Book book2 = bookService.createBook("클린 코드", 33000);

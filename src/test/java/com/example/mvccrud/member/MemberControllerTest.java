@@ -11,6 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -24,9 +26,14 @@ class MemberControllerTest {
     @BeforeEach
     void setUp() {
         MemberRepository memberRepository = new MemoryMemberRepository();
-        MemberService memberService = new MemberService(memberRepository);
-        MemberController memberController = new MemberController(memberService,
-            new SortValidator());
+
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        MemberService memberService = new MemberService(memberRepository, passwordEncoder);
+
+        MemberController memberController = new MemberController(
+            memberService,
+            new SortValidator()
+        );
 
         mockMvc = MockMvcBuilders
             .standaloneSetup(memberController)
@@ -37,10 +44,14 @@ class MemberControllerTest {
         objectMapper = new ObjectMapper();
     }
 
+    private MemberCreateRequest createRequest(String name, String email, int age) {
+        return new MemberCreateRequest(name, email, "password1234", age);
+    }
+
     @Test
     public void 회원_등록_API() throws Exception{
         //given
-        MemberCreateRequest request = new MemberCreateRequest("김철수", "kim@test.com", 30);
+        MemberCreateRequest request = createRequest("김철수", "kim@test.com", 30);
         //when
 
         mockMvc.perform(post("/members")
@@ -58,7 +69,7 @@ class MemberControllerTest {
     @Test
     public void 회원_등록_검증_실패() throws Exception{
         //given
-        MemberCreateRequest request = new MemberCreateRequest("", "bad-email", 0);
+        MemberCreateRequest request = createRequest("", "bad-email", 0);
         //when
 
         mockMvc.perform(post("/members")
@@ -78,12 +89,12 @@ class MemberControllerTest {
         mockMvc.perform(post("/members")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(
-                new MemberCreateRequest("김철수", "kim@test.com", 30)
+                createRequest("김철수", "kim@test.com", 30)
             )));
         mockMvc.perform(post("/members")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new MemberCreateRequest("이영희", "kim@test.com", 30)
+                    createRequest("이영희", "kim@test.com", 30)
                 )))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
@@ -97,7 +108,7 @@ class MemberControllerTest {
         String responseBody = mockMvc.perform(post("/members")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new MemberCreateRequest("김철수", "kim@test.com", 30)
+                    createRequest("김철수", "kim@test.com", 30)
                 )))
             .andReturn()
             .getResponse()
@@ -131,12 +142,12 @@ class MemberControllerTest {
         mockMvc.perform(post("/members")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(
-                new MemberCreateRequest("김철수", "kim@test.com", 30)
+                createRequest("김철수", "kim@test.com", 30)
             )));
         mockMvc.perform(post("/members")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(
-                new MemberCreateRequest("이영희", "lee@test.com", 30)
+                createRequest("이영희", "lee@test.com", 30)
             )));
 
         mockMvc.perform(get("/members"))
@@ -150,7 +161,7 @@ class MemberControllerTest {
         String responseBody = mockMvc.perform(post("/members")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new MemberCreateRequest("김철수", "kim@test.com", 300)
+                    createRequest("김철수", "kim@test.com", 300)
                 )))
             .andReturn()
             .getResponse()
@@ -181,7 +192,7 @@ class MemberControllerTest {
         String responseBody = mockMvc.perform(post("/members")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new MemberCreateRequest("김철수", "kim@test.com", 30)
+                    createRequest("김철수", "kim@test.com", 30)
                 )))
             .andReturn()
             .getResponse()
@@ -212,7 +223,7 @@ class MemberControllerTest {
         String responseBody = mockMvc.perform(post("/members")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new MemberCreateRequest("김철수", "kim@test.com", 30)
+                    createRequest("김철수", "kim@test.com", 30)
                 )))
             .andReturn()
             .getResponse()
@@ -235,17 +246,17 @@ class MemberControllerTest {
         mockMvc.perform(post("/members")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(
-                new MemberCreateRequest("김철수", "kim@test.com", 30)
+                createRequest("김철수", "kim@test.com", 30)
             )));
         mockMvc.perform(post("/members")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(
-                new MemberCreateRequest("김영희", "young@naver.com", 30)
+                createRequest("김영희", "young@naver.com", 30)
             )));
         mockMvc.perform(post("/members")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(
-                new MemberCreateRequest("박민수", "park@test.com", 30)
+                createRequest("박민수", "park@test.com", 30)
             )));
         //when
         mockMvc.perform(get("/members/search")

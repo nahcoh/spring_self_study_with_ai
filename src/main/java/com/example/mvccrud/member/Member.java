@@ -18,27 +18,40 @@ public class Member extends BaseEntity {
     private String name;
     private String email;
     private int age;
+    private String password;
 
-    public Member(String name, String email, int age) {
+    public Member(String name, String email, String password, int age) {
         validateEmail(email);
         validateName(name);
+        validatePassword(password);
         validateAge(age);
 
         this.name = name;
         this.email = email;
+        this.password = password;
         this.age = age;
     }
 
-    Member(Long id, String name, String email, int age) {
+    Member(Long id, String name, String email, String password, int age) {
         validateName(name);
         validateEmail(email);
+        validatePassword(password);
         validateAge(age);
 
         this.id = id;
         this.name = name;
         this.email = email;
+        this.password = password;
         this.age = age;
     }
+
+    private void validatePassword(String password) {
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("비밀번호는 필수입니다.");
+        }
+
+    }
+
     private void validateName(String name) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("이름은 필수로 입력해야 합니다.");

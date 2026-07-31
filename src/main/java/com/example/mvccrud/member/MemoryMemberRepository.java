@@ -21,10 +21,12 @@ public class MemoryMemberRepository implements MemberRepository{
     @Override
     public Member save(Member member) {
         Long id = ++sequence;
+
         Member savedMember = new Member(
             id,
             member.getName(),
             member.getEmail(),
+            member.getPassword(),
             member.getAge()
         );
         store.put(id, savedMember);

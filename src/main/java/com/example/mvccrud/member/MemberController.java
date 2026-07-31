@@ -47,9 +47,12 @@ public class MemberController {
     public ResponseEntity<ApiResponse<MemberResponse>> createMember(
         @RequestBody @Valid MemberCreateRequest request
     ) {
-        Member member = memberService.createMember(request.getName()
-            , request.getEmail(),
-            request.getAge());
+        Member member = memberService.createMember(
+            request.getName(),
+            request.getEmail(),
+            request.getPassword(),
+            request.getAge()
+        );
 
         ApiResponse<MemberResponse> response = ApiResponse.of(
             new MemberResponse(member));

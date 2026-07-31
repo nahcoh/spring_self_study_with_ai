@@ -24,9 +24,15 @@ public class MemberCreateRequest {
     @Min(value = 1, message = "나이는 1 이상이어야 합니다.")
     private int age;
 
-    public MemberCreateRequest(String name, String email, int age) {
+    @NotBlank(message = "비밀번호는 필수입니다.")
+    @Schema(description = "비밀번호", example = "password1234")
+    private String password;
+
+
+    public MemberCreateRequest(String name, String email,String password, int age ) {
         this.name = name;
         this.email = email;
+        this.password = password;
         this.age = age;
     }
 }

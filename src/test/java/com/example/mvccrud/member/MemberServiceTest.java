@@ -7,16 +7,37 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 class MemberServiceTest {
 
     private MemberService memberService;
+    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
         MemberRepository memberRepository = new MemoryMemberRepository();
-        memberService = new MemberService(memberRepository);
+        passwordEncoder = new BCryptPasswordEncoder();
+        memberService = new MemberService(memberRepository, passwordEncoder);
+    }
 
+    @Test
+    public void 회원_등록시_비밀번호는_암호화되어_저장된다() throws Exception {
+        //given
+        String rawPassword = "password";
+
+        //when
+        Member member = memberService.createMember(
+            "김철수",
+            "security@test.com",
+            rawPassword,
+            30
+        );
+
+        //then
+        assertThat(member.getPassword()).isNotEqualTo(rawPassword);
+        assertThat(passwordEncoder.matches(rawPassword, member.getPassword())).isTrue();
     }
 
     @Test
@@ -27,7 +48,7 @@ class MemberServiceTest {
         int age = 30;
 
         //when
-        Member member = memberService.createMember(name, email, age);
+        Member member = createMember(name, email, age);
 
         //then
         assertThat(member.getId()).isNotNull();
@@ -40,11 +61,11 @@ class MemberServiceTest {
     @Test
     public void 이메일_중복_등록_실패() throws Exception{
         //given
-        memberService.createMember("김철수", "kim@test.com", 30);
+        createMember("김철수", "kim@test.com", 30);
 
         //when//then
         assertThatThrownBy(() ->
-            memberService.createMember("이영희", "kim@test.com", 25)
+            createMember("이영희", "kim@test.com", 25)
         )
             .isInstanceOf(DuplicateEmailException.class)
             .hasMessage("이미 사용 중인 이메일입니다.");
@@ -53,7 +74,7 @@ class MemberServiceTest {
     @Test
     public void 회원_단건_조회_성공() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = createMember("김철수", "kim@test.com", 30);
 
         //when
         Member foundMember = memberService.findMember(member.getId());
@@ -79,8 +100,8 @@ class MemberServiceTest {
     @Test
     public void 회원_전체_조회() throws Exception{
         //given
-        memberService.createMember("김철수", "kim@test.com", 30);
-        memberService.createMember("이영희", "lee@test.com", 25);
+        createMember("김철수", "kim@test.com", 30);
+        createMember("이영희", "lee@test.com", 25);
 
         //when
         List<Member> members = memberService.findMembers();
@@ -92,7 +113,7 @@ class MemberServiceTest {
     @Test
     public void 회원_전체_수정_PUT() throws Exception{
         //given
-        Member savedMember = memberService.createMember("김철수", "kim@test.com", 30);
+        Member savedMember = createMember("김철수", "kim@test.com", 30);
         //when
         Member updatedMember = memberService.updateMember(savedMember.getId(), "수정된 이름", "new@test.com",
             35);
@@ -106,8 +127,8 @@ class MemberServiceTest {
     @Test
     public void 회원_전체_수정시_이메일_중복_실패() throws Exception{
         //given
-        Member member1 = memberService.createMember("김철수", "kim@test.com",30);
-        memberService.createMember("이영희", "lee@test.com", 25);
+        Member member1 = createMember("김철수", "kim@test.com",30);
+        createMember("이영희", "lee@test.com", 25);
         //when&then
         assertThatThrownBy(() ->
             memberService.updateMember(
@@ -123,7 +144,7 @@ class MemberServiceTest {
     @Test
     public void 회원_이름만_부분수정_PATHC() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = createMember("김철수", "kim@test.com", 30);
         //when
         Member patchedMember = memberService.patchMember(
             member.getId(),
@@ -141,7 +162,7 @@ class MemberServiceTest {
     @Test
     public void 회원_이메일만_부분수정_PATHC() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = createMember("김철수", "kim@test.com", 30);
         //when
         Member patchedMember = memberService.patchMember(
             member.getId(),
@@ -160,7 +181,7 @@ class MemberServiceTest {
     @Test
     public void 회원_나이만_부분수정_PATHC() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = createMember("김철수", "kim@test.com", 30);
         //when
         Member patchedMember = memberService.patchMember(
             member.getId(),
@@ -179,8 +200,8 @@ class MemberServiceTest {
     @Test
     public void 회원_부분수정시_이메일_중복_실패() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
-        memberService.createMember("이영희", "lee@test.com", 25);
+        Member member = createMember("김철수", "kim@test.com", 30);
+        createMember("이영희", "lee@test.com", 25);
         //when
         assertThatThrownBy(() ->
             memberService.patchMember(
@@ -198,7 +219,7 @@ class MemberServiceTest {
     @Test
     public void 회원_삭제_성공() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = createMember("김철수", "kim@test.com", 30);
         //when
         memberService.deleteMember(member.getId());
 
@@ -223,9 +244,9 @@ class MemberServiceTest {
     @Test
     public void 이름으로_회원_검색() throws Exception{
         //given
-        memberService.createMember("박민수", "park@test.com", 20);
-        memberService.createMember("김철수", "kim@test.com", 30);
-        memberService.createMember("김영희", "yong@test.com", 25);
+        createMember("박민수", "park@test.com", 20);
+        createMember("김철수", "kim@test.com", 30);
+        createMember("김영희", "yong@test.com", 25);
         //when
         List<Member> members = memberService.searchMembers("김",null);
         //then
@@ -236,9 +257,9 @@ class MemberServiceTest {
     @Test
     public void 이메일로_회원_검색() throws Exception{
         //given
-        memberService.createMember("박민수", "park@test.com", 20);
-        memberService.createMember("김철수", "kim@test.com", 30);
-        memberService.createMember("김영희", "yong@test.com", 25);
+        createMember("박민수", "park@test.com", 20);
+        createMember("김철수", "kim@test.com", 30);
+        createMember("김영희", "yong@test.com", 25);
         //when
         List<Member> members = memberService.searchMembers(null,"test.com");
         //then
@@ -249,14 +270,18 @@ class MemberServiceTest {
     @Test
     public void 이름과_이메일로_회원_검색() throws Exception{
         //given
-        memberService.createMember("박민수", "park@test.com", 20);
-        memberService.createMember("김철수", "kim@test.com", 30);
-        memberService.createMember("김영희", "yong@naver.com", 25);
+        createMember("박민수", "park@test.com", 20);
+        createMember("김철수", "kim@test.com", 30);
+        createMember("김영희", "yong@naver.com", 25);
         //when
         List<Member> members = memberService.searchMembers("김","test.com");
         //then
         assertThat(members).hasSize(1);
         assertThat(members.get(0).getName()).isEqualTo("김철수");
 
+    }
+
+    private Member createMember(String name, String email, int age) {
+        return memberService.createMember(name, email, "password1234", age);
     }
 }

@@ -3,23 +3,31 @@ package com.example.mvccrud.member;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public MemberService(MemberRepository memberRepository) {
+    public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
         this.memberRepository = memberRepository;
     }
 
-    public Member createMember(String name, String email, int age) {
+    @Transactional
+    public Member createMember(String name, String email, String password, int age) {
         if (memberRepository.existsByEmail(email)) {
             throw new DuplicateEmailException();
         }
 
-        Member member = new Member(null, name, email, age);
+        String encodedPassword = passwordEncoder.encode(password);
+
+        Member member = new Member(null, name, email, encodedPassword, age);
         return memberRepository.save(member);
     }
 

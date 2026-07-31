@@ -13,6 +13,8 @@ import com.example.mvccrud.member.MemoryMemberRepository;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 class OrderServiceTest {
 
@@ -25,8 +27,9 @@ class OrderServiceTest {
         MemoryMemberRepository memberRepository = new MemoryMemberRepository();
         MemoryBookRepository bookRepository = new MemoryBookRepository();
         MemoryOrderRepository orderRepository = new MemoryOrderRepository();
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-        memberService = new MemberService(memberRepository);
+        memberService = new MemberService(memberRepository, passwordEncoder);
         bookService = new BookService(bookRepository);
         orderService = new OrderService(orderRepository, memberService, bookService);
 
@@ -35,7 +38,7 @@ class OrderServiceTest {
     @Test
     public void 주문_생성_성공() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = memberService.createMember("김철수", "kim@test.com", "password1234", 30);
         Book book = bookService.createBook("데미안", 15000);
         //when
 
@@ -64,7 +67,7 @@ class OrderServiceTest {
     @Test
     public void 없는_책으로_주문_생성_실패() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = memberService.createMember("김철수", "kim@test.com", "password1234", 30);
         //when//then
         assertThatThrownBy(() -> orderService.createOrder(member.getId(), 999L, 2))
             .isInstanceOf(RuntimeException.class);
@@ -73,7 +76,7 @@ class OrderServiceTest {
     @Test
     public void 주문_단건_조회_성공() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = memberService.createMember("김철수", "kim@test.com", "password1234", 30);
         Book book = bookService.createBook("데미안", 15000);
         Order savedOrder = orderService.createOrder(member.getId(), book.getId(), 2);
         //when
@@ -97,7 +100,7 @@ class OrderServiceTest {
     @Test
     public void 주문_전체_조회() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = memberService.createMember("김철수", "kim@test.com", "password1234", 30);
         Book book = bookService.createBook("데미안", 15000);
         Book book2 = bookService.createBook("자바의 정석", 30000);
 
@@ -113,7 +116,7 @@ class OrderServiceTest {
     @Test
     public void 주문_취소_성공() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = memberService.createMember("김철수", "kim@test.com", "password1234", 30);
         Book book = bookService.createBook("데미안", 15000);
         Order order = orderService.createOrder(member.getId(), book.getId(), 2);
 
@@ -127,7 +130,7 @@ class OrderServiceTest {
     @Test
     public void 이미_취소된_주문_다시_취소_실패() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = memberService.createMember("김철수", "kim@test.com", "password1234", 30);
         Book book = bookService.createBook("데미안", 15000);
         Order order = orderService.createOrder(member.getId(), book.getId(), 2);
         orderService.cancelOrder(order.getId());
@@ -142,8 +145,8 @@ class OrderServiceTest {
     @Test
     public void 회원ID로_주문_검색() throws Exception{
         //given
-        Member member1 = memberService.createMember("김철수", "kim@test.com", 30);
-        Member member2 = memberService.createMember("이영희", "lee@test.com", 25);
+        Member member1 = memberService.createMember("김철수", "kim@test.com", "password1234", 30);
+        Member member2 = memberService.createMember("이영희", "lee@test.com","password1234",25);
         Book book = bookService.createBook("데미안", 15000);
 
         orderService.createOrder(member1.getId(), book.getId(), 1);
@@ -160,7 +163,7 @@ class OrderServiceTest {
     @Test
     public void 상태로_주문_검색() throws Exception{
         //given
-        Member member = memberService.createMember("김철수", "kim@test.com", 30);
+        Member member = memberService.createMember("김철수", "kim@test.com", "password1234", 30);
         Book book = bookService.createBook("데미안", 15000);
 
         Order order1 = orderService.createOrder(member.getId(), book.getId(), 1);
@@ -180,8 +183,8 @@ class OrderServiceTest {
     @Test
     public void 회원ID와_상태로_주문_검색() throws Exception{
         //given
-        Member member1 = memberService.createMember("김철수", "kim@test.com", 30);
-        Member member2 = memberService.createMember("이영희", "lee@test.com", 25);
+        Member member1 = memberService.createMember("김철수", "kim@test.com", "password1234", 30);
+        Member member2 = memberService.createMember("이영희", "lee@test.com" ,"password1234",25);
         Book book = bookService.createBook("데미안", 15000);
 
         Order order1 = orderService.createOrder(member1.getId(), book.getId(), 1);
