@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: ${DB_URL}
+    url: jdbc:mysql://localhost:3306/mvc_crud?serverTime=Asia/Seoul?characterEncoding=UTF-8
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    username: mvc_user
+    password: mvc_password
 
   jpa:
     hibernate:
