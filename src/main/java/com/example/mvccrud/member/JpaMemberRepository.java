@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface JpaMemberRepository extends JpaRepository<Member, Long>, MemberRepository {
 
+    @Override
     Optional<Member> findByEmail(String email);
 
     boolean existsByEmail(String email);

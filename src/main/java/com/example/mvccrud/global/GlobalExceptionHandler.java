@@ -1,5 +1,6 @@
 package com.example.mvccrud.global;
 
+import com.example.mvccrud.auth.LoginFailedException;
 import com.example.mvccrud.book.BookNotFoundException;
 import com.example.mvccrud.member.DuplicateEmailException;
 import com.example.mvccrud.member.MemberNotFoundException;
@@ -88,4 +89,16 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
+
+    @ExceptionHandler(LoginFailedException.class)
+    public ResponseEntity<ErrorResponse> handleLoginFailedException(LoginFailedException e) {
+        ErrorResponse response = new ErrorResponse(
+            401,
+            e.getMessage(),
+            null
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
 }
