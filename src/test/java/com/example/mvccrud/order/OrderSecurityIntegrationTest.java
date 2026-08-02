@@ -1,6 +1,7 @@
 package com.example.mvccrud.order;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mvccrud.auth.LoginRequest;
@@ -40,7 +41,6 @@ public class OrderSecurityIntegrationTest {
         Book book = bookService.createBook("데미안", 15000);
 
         OrderCreateRequest request = new OrderCreateRequest(
-            member.getId(),
             book.getId(),
             2
         );
@@ -50,6 +50,7 @@ public class OrderSecurityIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isUnauthorized());
+
     }
 
     @Test
@@ -83,7 +84,6 @@ public class OrderSecurityIntegrationTest {
             .asText();
 
         OrderCreateRequest orderRequest = new OrderCreateRequest(
-            member.getId(),
             book.getId(),
             2
         );
@@ -93,7 +93,9 @@ public class OrderSecurityIntegrationTest {
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(orderRequest)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isCreated())
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.memberId").value(member.getId()));
     }
 
 

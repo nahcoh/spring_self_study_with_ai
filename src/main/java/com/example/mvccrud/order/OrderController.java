@@ -3,6 +3,7 @@ package com.example.mvccrud.order;
 import com.example.mvccrud.global.ApiResponse;
 import com.example.mvccrud.global.PageResponse;
 import com.example.mvccrud.global.SortValidator;
+import com.example.mvccrud.global.security.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -14,6 +15,8 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -44,16 +47,27 @@ public class OrderController {
     public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
         @RequestBody @Valid OrderCreateRequest request
     ) {
+        CustomUserPrincipal principal = getCurrentUser();
+
         OrderResponse order = orderService.createOrderResponse(
-            request.getMemberId(),
+            principal.memberId(),
             request.getBookId(),
             request.getQuantity()
         );
 
-
-
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.of(order));
+    }
+
+    private CustomUserPrincipal getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null
+            || !(authentication.getPrincipal() instanceof CustomUserPrincipal principal)) {
+            throw new IllegalStateException("인증 정보가 없습니다.");
+        }
+
+        return principal;
     }
 
 

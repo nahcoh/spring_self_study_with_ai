@@ -63,7 +63,7 @@ class OrderControllerTest {
         Long memberId = createMember();
         Long bookId = createBook();
 
-        OrderCreateRequest request = new OrderCreateRequest(memberId, bookId, 2);
+        OrderCreateRequest request = new OrderCreateRequest( bookId, 2);
 
         mockMvc.perform(post("/orders")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -80,7 +80,7 @@ class OrderControllerTest {
 
     @Test
     public void 주문_생성_검증_실패_API() throws Exception {
-        OrderCreateRequest request = new OrderCreateRequest(null, null, 0);
+        OrderCreateRequest request = new OrderCreateRequest( null, 0);
 
         mockMvc.perform(post("/orders")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -94,7 +94,7 @@ class OrderControllerTest {
     @Test
     public void 없는_회원으로_주문_생성_실패() throws Exception {
         Long bookId = createBook();
-        OrderCreateRequest request = new OrderCreateRequest(999L, bookId, 2);
+        OrderCreateRequest request = new OrderCreateRequest( bookId, 2);
 
         mockMvc.perform(post("/orders")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -107,7 +107,7 @@ class OrderControllerTest {
     @Test
     public void 없는_책으로_주문_생성_실패_API() throws Exception {
         Long memberId = createMember();
-        OrderCreateRequest request = new OrderCreateRequest(memberId, 888L, 2);
+        OrderCreateRequest request = new OrderCreateRequest( 888L, 2);
 
         mockMvc.perform(post("/orders")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -237,7 +237,7 @@ class OrderControllerTest {
     }
 
     private Long createOrder(Long memberId, Long bookId, int quantity) throws Exception {
-        OrderCreateRequest request = new OrderCreateRequest(memberId, bookId, quantity);
+        OrderCreateRequest request = new OrderCreateRequest( bookId, quantity);
 
         String responseBody = mockMvc.perform(post("/orders")
                 .contentType(MediaType.APPLICATION_JSON)
