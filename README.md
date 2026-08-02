@@ -536,6 +536,73 @@ POST /auth/login
   "password": "password1234"
 }
 ```
+---
+## 인증/보안
+Spring Security와 JWT를 사용해 REST API 기반 인증 구조를 구현했다.
+
+### 주요기능
+- 회원 비밀번호 BCrypt 암호화 저장
+- 로그인 API 구현
+- 로그인 성공 시 JWT Access Token 발급
+- JWT 인증 필터 구현
+- Authorization 헤더의 Bearer Token 검증
+- SecurityContext 기반 현재 사용자 식별
+- 주문 생성 API 인증 보호 적용
+- 인증 실패 시 401 Unauthorized 응답 처리
+
+### 인증 흐름
+```text
+1. 회원가입
+  POST /members
+  -> 비밀번호를 BCrypt로 암호화해 저장
+
+2. 로그인
+  POST /auth/login
+  -> email/password 검증
+  -> JWT Access Token 발급
+  
+3. 인증 요청
+  Authorization: Bearer <accessToken>
+  -> JwtAuthenticationFilter에서 토큰 검증
+  -> SecurityContext에 인증 정보 저장
+  
+4. 보호된 API 접근
+  POST /orders
+  -> 토큰 없음: 401 Unauthorized
+  -> 토큰 있음: 주문 생성 성공
+```
+**로그인 요청 예시 **
+```http
+POST /auth/login
+```
+```json
+{
+  "email": "kim@test.com",
+  "password": "password1234"
+}
+```
+**로그인 응답 예시**
+```json
+{
+  "data": {
+    "memberId": 1,
+    "email": "kim@test.com",
+    "accessToken": "eyJhbGciOiJIUzI1NiJ9..."
+  }
+}
+```
+**인증 요청 예시**
+```http request
+POST /orders
+Authorization: Bearer {{$auth.token("")}}
+```
+**보안 테스트**
+- 로그인 성공 시 JWT 발급 검증
+- 잘못된 로그인 요청 시 401 응답 검증
+- JWT로 현재 사용자 조회 검증
+- 토큰 없이 주문 생성 시 401 응답 검증
+- 토큰이 있으면 주문 생성 성공 검증
+
 
 ---
 ### 배포 구성
@@ -600,6 +667,8 @@ http://<EC2_PUBLIC_IP>:8080/swagger-ui/index.html
 
 ---
 
+
+---
 ## API 목록
 
 ### Book API

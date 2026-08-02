@@ -1299,7 +1299,7 @@ data/
 
 
 ---
-# Nginx Reverse Proxy
+# 29. Nginx Reverse Proxy
 
 EC2에 배포한 Spring Boot 애플리케이션은 기본적으로 8080 포트에서 실행된다.
 
@@ -1337,7 +1337,7 @@ server_name _;
 
 
 ---
-# GitHub Actions EC2 자동 배포
+# 30. GitHub Actions EC2 자동 배포
 기존에는 EC2에 직접 SSH 접속해서 수동으로 배포했다.
 ```bash
 git pull
@@ -1367,7 +1367,7 @@ dial tcp ***:22: i/o timeout
 - EC2 보안그룹이 막혀 있으면 workflow에서 SSH 접속이 timeout 된다.
 - CI/CD가 구성되면 push 이후 테스트와 배포가 자동화된다.
 ---
-# GHCR 기반 Docker 이미지 배포
+# 31. GHCR 기반 Docker 이미지 배포
 기존 배포 방식은 EC2 서버에서 직접 Dokcer 이미지를 빌드하는 구조였다.
 ```bash
 git pull origin main
@@ -1404,7 +1404,131 @@ push: true
 - EC2에서 직접 빌드하지 않고 이미지를 pull하는 방식이 더 안정적이다.
 - YAML 오타 하나로 workflow 해석이 완전히 달라질 수 있다.
 ---
-# 29. 현재까지의 한 줄 요약
+# 32. Spring Security + JWT 학습 정리
+## 1. 로그인은 왜 POST인가?
+로그인은 단순 조회가 아니라 인증 처리 요청이다.
+
+처리 흐름은 다음과 같다.
+```text
+email/password 제출
+-> 서버가 회원 조회
+-> 비밀번호 검증
+-> 인증 성공 여부 판단
+-> JWT Access Token 발급
+```
+GET 요청은 URL에 데이터가 노출될 수 있다.
+```http request
+GET /auth/login?email=kim@test.com&password=password1234
+```
+이 방식은 비밀번호가 브라우저 히스토리, 서버 로그, 프록시 로그 등에 남을 수 있기 때문에 부적절하다.
+
+따라서 로그인은 요청 body에 자격 증명을 담을 수 있는 POST를 사용한다.
+```http request
+POST /auth/login
+```
+
+```json
+{
+  "email": "kim@test.com",
+  "password": "password1234"
+}
+```
+POST는 반드시 DB에 데이터를 저장한다는 뜻이 아니라, 서버에 어떤 처리를 요청한다는 의미로 볼 수 있다. 
+
+로그인의 경우 서버는 입력된 자격 증명을 검증하고, 성공하면 JWT를 발급한다.
+
+## JWT란?
+JWT는 로그인 성공 후 서버가 발급하는 서명된 토큰이다.
+
+클라이언트는 이후 요청마다 다음 헤더에 토큰을 담아 보낸다.
+```http request
+Authorization: Bearer <accessToken>
+```
+서버는 JWT를 검증해서 요청을 보낸 사용자가 누구인지 식별한다.
+
+JWT는 암호화가 아니라 서명 기반이다. 
+따라서 Payload는 누구나 디코딩할 수 있으므로 비밀번호나 민감정보를 넣으면 안된다.
+
+현재 프로젝트에서는 JWT에 다음 정보를 담았다.
+```text
+subject: memberId
+email: 회원 이메일
+issueAt: 발급 시간
+expiration: 만료 시간
+```
+## 3.JwtProvider의 역할
+`JwtProvider`는 JWT를 생성하고 검증하는 책임을 가진다.
+주요 역할:
+```text
+1. 로그인 성공 시 Access Token 생성
+2. 토큰 유효성 검증
+3. 토큰에서 memberId 추출
+4. 토큰에서 email 추출
+```
+토큰 생성 흐름:
+```java
+Jwts.builder()
+    .subject(String.valueOf(member.getId()))
+    .claim("email", member.getEmail())
+    .issuedAt(now)
+    .expiration(expiration)
+    .signWith(secretKey)
+    .compact();
+```
+## 4.JwtAuthenticationFilter의 역할
+`JwtAuthenticationFilter`는 요청마다 Authorization 헤더를 확인한다.
+처리 흐름: 
+```text
+1. Authorization 헤더 확인
+2. Bearer 토큰인지 확인
+3. JWT 유효성 검증
+4. 토큰에서 memberId/email 추출
+5. CustomUserPrincipal 생성
+6. Authentication 객체 생성
+7. SecurityContextHolder에 저장
+```
+즉, 필터는 토큰을 검사해서 SpringSecurity가 이해할 수 있는 인증 정보로 바꿔주는 역할을 한다.
+
+## 5. SecurityContext란? 
+`SecurityContextHolder`는 현재 요청의 인증 정보를 저장하는 공간이다. 
+
+JWT 필터가 인증에 성공한면 다음과 같이 인증 객체를 저장한다.
+```java
+SecurityContextHolder.getContext().setAuthentication(authentication);
+```
+이후 Controller나 Service에서는 현재 로그인 사용자를 참조할 수 있다. 
+
+## 6. ScurityConfig의 역할
+`SecurityConfig`는 어떤 API를 열고 잠글지를 정의한다.
+현재 설정: 
+```java
+.requestMatchers(
+    "/actuator/healt/**",
+    "/swagger-ui/**",
+    "/v3/api-docs/**",
+    "/h2-console/**",
+    "/auth/login",
+    "/members"
+).permitAll()
+.requestMatchers(HttpMethod.POST,"/orders").authenticated()
+.anyRequest().permitAll()
+```
+의미:
+```text
+/auth/login, /members 등은 누구나 접근 가능
+POST /orders는 로그인한 사용자만 접근 가능
+나머지는 아직 임시로 허용
+```
+## 7. 이번 단계에서 배운 점
+- 로그인은 단순 조회가 아니라 인증 처리 요청이므로 POST를 사용한다.
+- 비밀번호는 URL에 노출되면 안되므로 GET 로그인은 부적절하다.
+- JWT 발급은 로그인 성공의 결과다.
+- JWT 필터는 Authorization 헤더의 토큰을 검증한다.
+- 검증된 사용자 정보는 SecurityContext에 저장된다.
+- `authenticated()`를 사용하면 특정 API를 로그인 사용자에게만 허용할 수 있다.
+- 보안 설정은 단위 테스트보다 통합 테스트로 검증하는 것이 더 적합하다.
+---
+# . 현재까지의 한 줄 요약
 
 ```text
 Spring Boot 기반 CRUD API를 구현하고, JPA/MySQL/Redis/Docker Compose/GitHub Actions/Actuator를 적용한 뒤 AWS EC2에 배포했다.
