@@ -12,6 +12,8 @@ import com.example.mvccrud.book.BookService;
 import com.example.mvccrud.book.MemoryBookRepository;
 import com.example.mvccrud.global.GlobalExceptionHandler;
 import com.example.mvccrud.global.SortValidator;
+import com.example.mvccrud.global.security.JwtAuthenticationFilter;
+import com.example.mvccrud.global.security.JwtProvider;
 import com.example.mvccrud.member.MemberController;
 import com.example.mvccrud.member.MemberService;
 import com.example.mvccrud.member.MemoryMemberRepository;
@@ -45,6 +47,7 @@ class OrderControllerTest {
         MemberController memberController = new MemberController(memberService, new SortValidator());
         BookController bookController = new BookController(bookService, new SortValidator());
         OrderController orderController = new OrderController(orderService, new SortValidator());
+
 
         mockMvc = MockMvcBuilders
             .standaloneSetup(memberController, bookController, orderController)
