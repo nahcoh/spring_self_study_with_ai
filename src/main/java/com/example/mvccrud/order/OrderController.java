@@ -116,4 +116,20 @@ public class OrderController {
         return ApiResponse.of(PageResponse.from(orders));
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<PageResponse<OrderResponse>>> findMyOrders(Pageable pageable) {
+
+        CustomUserPrincipal principal = getCurrentUser();
+
+        Page<OrderResponse> orders = orderService.searchOrderResponses(
+            principal.memberId(),
+            null,
+            pageable
+        );
+
+        return ResponseEntity.ok(
+            new ApiResponse<>(PageResponse.from(orders))
+        );
+    }
+
 }

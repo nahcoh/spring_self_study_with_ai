@@ -603,6 +603,7 @@ Authorization: Bearer {{$auth.token("")}}
 - 토큰 없이 주문 생성 시 401 응답 검증
 - 토큰이 있으면 주문 생성 성공 검증
 
+- 주문 생성 시 요청 body의 memberId를 사용하지 않고, JWT 인증 정보에서 현재 로그인 사용자의 memberId를 추출해 주문을 생성하도록 개선
 
 ---
 ### 배포 구성

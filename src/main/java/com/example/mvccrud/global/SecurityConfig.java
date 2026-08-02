@@ -43,6 +43,7 @@ public class SecurityConfig {
                         "/members"
                     ).permitAll()
                     .requestMatchers(HttpMethod.POST, "/orders").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/orders/my").authenticated()
                     .anyRequest().permitAll()
             )
             .headers(headers ->
