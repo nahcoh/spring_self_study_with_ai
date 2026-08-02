@@ -2,9 +2,12 @@ package com.example.mvccrud.auth;
 
 
 import com.example.mvccrud.global.ApiResponse;
+import com.example.mvccrud.global.security.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,5 +31,18 @@ public class AuthController {
         );
 
         return ResponseEntity.ok(new ApiResponse<>(response));
+    }
+
+    @Operation(summary = "내 인증 정보 확인", description = "JWT 인증 필터를 통해 저장된 현재 로그인 사용자 정보를 확인합니다.")
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<CustomUserPrincipal>> me() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null
+            || !(authentication.getPrincipal() instanceof CustomUserPrincipal principal)) {
+            throw new LoginFailedException();
+        }
+
+        return ResponseEntity.ok(new ApiResponse<>(principal));
     }
 }

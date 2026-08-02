@@ -1,10 +1,12 @@
 package com.example.mvccrud.auth;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mvccrud.global.GlobalExceptionHandler;
+import com.example.mvccrud.global.security.JwtAuthenticationFilter;
 import com.example.mvccrud.global.security.JwtProvider;
 import com.example.mvccrud.member.MemberRepository;
 import com.example.mvccrud.member.MemberService;
@@ -42,6 +44,7 @@ public class AuthControllerTest {
         mockMvc = MockMvcBuilders
             .standaloneSetup(authController)
             .setControllerAdvice(new GlobalExceptionHandler())
+            .addFilters(new JwtAuthenticationFilter(jwtProvider))
             .build();
 
         objectMapper = new ObjectMapper();
@@ -129,5 +132,41 @@ public class AuthControllerTest {
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.message").value("검증에 실패했습니다."))
             .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    public void accessToken으로_내_정보를_조회한다() throws Exception{
+        //given
+        memberService.createMember(
+            "김철수",
+            "kim@test.com",
+            "password1234",
+            30
+        );
+
+        LoginRequest loginRequest = new LoginRequest(
+            "kim@test.com",
+            "password1234"
+        );
+
+        String responseBody = mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        String accessToken = objectMapper.readTree(responseBody)
+            .get("data")
+            .get("accessToken")
+            .asText();
+
+        //when//then
+        mockMvc.perform(get("/auth/me")
+                .header("Authorization", "Bearer " + accessToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.memberId").exists())
+            .andExpect(jsonPath("$.data.email").value("kim@test.com"));
     }
 }
