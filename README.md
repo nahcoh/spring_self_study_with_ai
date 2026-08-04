@@ -606,6 +606,10 @@ Authorization: Bearer {{$auth.token("")}}
 - 주문 생성 시 요청 body의 memberId를 사용하지 않고, JWT 인증 정보에서 현재 로그인 사용자의 memberId를 추출해 주문을 생성하도록 개선
 - `GET /orders/my` API를 추가해 현재 로그인한 사용자의 주문만 조회할 수 있도록 구현
 ---
+- 주문 취소 시 JWT 인증 정보의 memberId와 주문 소유자 memberId를 비교해 본인의 주문만 취소할 수 있도록 소유권 검증 구현
+- 다른 사용자의 주문 취소 시 403 Forbidden 응답 처리
+
+---
 ### 배포 구성
 
 - EC2 Ubuntu 24.04

@@ -146,7 +146,7 @@ public class OrderSecurityIntegrationTest {
                 .param("size","10"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.content.length()").value(1))
-            .andExpect(jsonPath("$.data.content[0].id").value(member1.getId()));
+            .andExpect(jsonPath("$.data.content[0].memberId").value(member1.getId()));
     }
 
     private String loginAndGetAccessToken(String email) throws Exception {
@@ -252,4 +252,118 @@ public class OrderSecurityIntegrationTest {
             .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    public void 본인_주문_단건_조회할_수_있다() throws Exception{
+        //given
+        Member member = memberService.createMember(
+            "김철수",
+            "find-owner@test.com",
+            "password1234",
+            30
+        );
+
+        Book book = bookService.createBook("데미안", 15500);
+
+        String accessToken = loginAndGetAccessToken("find-owner@test.com");
+
+        String orderResponseBody = mockMvc.perform(post("/orders")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new OrderCreateRequest(book.getId(), 2)
+                )))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        Long orderId = objectMapper.readTree(orderResponseBody)
+            .get("data")
+            .get("id")
+            .asLong();
+        //when//then
+        mockMvc.perform(get("/orders/{id}", orderId)
+                .header("Authorization", "Bearer " + accessToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.id").value(orderId))
+            .andExpect(jsonPath("$.data.memberId").value(member.getId()))
+            .andExpect(jsonPath("$.data.status").value("ORDERED"));
+    }
+
+    @Test
+    public void 남의_주문은_단건_조회할_수_없다() throws Exception{
+        //given
+        //when
+        memberService.createMember(
+            "김철수",
+            "find-owner-1@test.com",
+            "password1234",
+            30
+        );
+
+        memberService.createMember(
+            "이영희",
+            "find-owner-2@test.com",
+            "password1234",
+            30
+        );
+
+        Book book = bookService.createBook("데미안", 15000);
+
+        String member1Token = loginAndGetAccessToken("find-owner-1@test.com");
+        String member2Token = loginAndGetAccessToken("find-owner-2@test.com");
+
+        String orderResponseBody = mockMvc.perform(post("/orders")
+                .header("Authorization", "Bearer " + member1Token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new OrderCreateRequest(book.getId(), 2)
+                )))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        Long orderId = objectMapper.readTree(orderResponseBody)
+            .get("data")
+            .get("id")
+            .asLong();
+        //then
+        mockMvc.perform(get("/orders/{id}", orderId)
+                .header("Authorization", "Bearer " + member2Token))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.status").value(403))
+            .andExpect(jsonPath("$.message").value("본인의 주문만 조회할 수 있습니다."));
+    }
+
+    @Test
+    public void 토큰_없이_주문_단건_조회하면_401이_나온다() throws Exception{
+        //given
+        Member member = memberService.createMember("김철수", "find-no-token@test.com", "password1234",
+            30);
+
+        Book book = bookService.createBook("데미안", 15000);
+
+        String accessToken = loginAndGetAccessToken("find-no-token@test.com");
+
+        String orderResponseBody = mockMvc.perform(post("/orders")
+            .header("Authorization","Bearer "+accessToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(
+                new OrderCreateRequest(book.getId(), 2)
+            )))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        Long orderId = objectMapper.readTree(orderResponseBody)
+            .get("data")
+            .get("id")
+            .asLong();
+
+        //when//then
+        mockMvc.perform(get("/orders/{id}", orderId))
+            .andExpect(status().isUnauthorized());
+    }
 }

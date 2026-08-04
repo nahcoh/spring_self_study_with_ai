@@ -111,5 +111,14 @@ public class OrderService {
         return order;
     }
 
+    public OrderResponse findMyOrderResponse(Long orderId, Long memberId) {
+        Order order = findOrder(orderId);
+
+        if (!order.getMemberId().equals(memberId)) {
+            throw new ForbiddenException("본인의 주문만 조회할 수 있습니다.");
+        }
+        return new OrderResponse(order);
+    }
+
 
 }

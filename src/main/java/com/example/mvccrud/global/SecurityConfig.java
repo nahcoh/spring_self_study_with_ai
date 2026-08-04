@@ -2,6 +2,7 @@ package com.example.mvccrud.global;
 
 import com.example.mvccrud.global.security.JwtAuthenticationFilter;
 import com.example.mvccrud.global.security.JwtProvider;
+import io.micrometer.core.instrument.binder.http.HttpMethods;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -44,7 +45,8 @@ public class SecurityConfig {
                     ).permitAll()
                     .requestMatchers(HttpMethod.POST, "/orders").authenticated()
                     .requestMatchers(HttpMethod.GET, "/orders/my").authenticated()
-                .requestMatchers(HttpMethod.PATCH, "/orders/*/cancel").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/orders/*").authenticated()
+                    .requestMatchers(HttpMethod.PATCH, "/orders/*/cancel").authenticated()
                     .anyRequest().permitAll()
             )
             .headers(headers ->

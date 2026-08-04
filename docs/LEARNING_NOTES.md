@@ -1569,7 +1569,17 @@ Controller는 SecurityContextHolder에서 CustomUserPrincipal을 꺼내 memberId
 }
 ```
 또한 `GET /orders/my` API를 추가해 현재 로그인한 사용자의 주문만 조회하도록 구현했다.
+---
+## 주문 취소 소유권 검증
+기존에는 로그인한 사용자라면 orderId만 알고 있을 때 다른 사용자으이 주문을 취소할 위험이 있었다.
 
+이를 방지하기 위해 주문 취소 시 JWT 인증 정보에서 추출한 memberId와 주문의 memberId를 비교했다.
+```java
+if(!order.getMemberId().equals(memberId)){
+    throw new ForbiddenException("본인의 주문만 취소할 수 있습니다.");
+    }
+```
+이를 통해 인증된 사용자라도 본인의 리소스가 아니면 조작할 수 없도록 인가 로직을 추가했다.
 ---
 # . 현재까지의 한 줄 요약
 

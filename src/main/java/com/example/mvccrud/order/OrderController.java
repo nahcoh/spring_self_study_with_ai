@@ -73,10 +73,16 @@ public class OrderController {
 
     @Operation(summary = "주문 단건 조회", description = "ID로 주문 한 건을 조회합니다.")
     @GetMapping("/{id}")
-    public ApiResponse<OrderResponse> findOrder(@PathVariable Long id) {
-        OrderResponse order = orderService.findOrderResponse(id);
+    public ResponseEntity<ApiResponse<OrderResponse>>findOrder(@PathVariable Long id) {
 
-        return ApiResponse.of(order);
+        CustomUserPrincipal principal = getCurrentUser();
+
+        OrderResponse response = orderService.findMyOrderResponse(
+            id,
+            principal.memberId()
+        );
+        return ResponseEntity.ok(new ApiResponse<>(response));
+
     }
 
     @Operation(summary = "주문 목록 조회", description = "주문 목록을 페이징과 정렬 조건으로 조회합니다.")
@@ -137,5 +143,6 @@ public class OrderController {
             new ApiResponse<>(PageResponse.from(orders))
         );
     }
+
 
 }
