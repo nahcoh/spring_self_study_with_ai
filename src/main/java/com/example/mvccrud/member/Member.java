@@ -2,6 +2,8 @@ package com.example.mvccrud.member;
 
 import com.example.mvccrud.global.BaseEntity;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import lombok.Getter;
@@ -19,6 +21,8 @@ public class Member extends BaseEntity {
     private String email;
     private int age;
     private String password;
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     public Member(String name, String email, String password, int age) {
         validateEmail(email);
@@ -30,6 +34,7 @@ public class Member extends BaseEntity {
         this.email = email;
         this.password = password;
         this.age = age;
+        this.role = Role.USER;
     }
 
     Member(Long id, String name, String email, String password, int age) {
@@ -43,7 +48,9 @@ public class Member extends BaseEntity {
         this.email = email;
         this.password = password;
         this.age = age;
+        this.role = Role.USER;
     }
+
 
     private void validatePassword(String password) {
         if (password == null || password.isBlank()) {

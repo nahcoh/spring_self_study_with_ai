@@ -31,6 +31,7 @@ public class JwtProvider {
         return Jwts.builder()
             .subject(String.valueOf(member.getId()))
             .claim("email", member.getEmail())
+            .claim("role", member.getRole().name())
             .issuedAt(now)
             .expiration(expiration)
             .signWith(secretKey)
@@ -63,4 +64,10 @@ public class JwtProvider {
         Claims claims = parseClaims(token);
         return claims.get("email", String.class);
     }
+
+    public String getRole(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get("role", String.class);
+    }
+    
 }

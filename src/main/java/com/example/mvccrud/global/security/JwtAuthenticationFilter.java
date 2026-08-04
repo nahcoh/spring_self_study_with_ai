@@ -44,17 +44,19 @@ public class JwtAuthenticationFilter  extends OncePerRequestFilter {
 
         Long memberId = Long.valueOf(claims.getSubject());
         String email = claims.get("email", String.class);
+        String role = claims.get("role", String.class);
 
         CustomUserPrincipal principal = new CustomUserPrincipal(
             memberId,
-            email
+            email,
+            role
         );
 
         UsernamePasswordAuthenticationToken authentication =
             new UsernamePasswordAuthenticationToken(
                 principal,
                 null,
-                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                List.of(new SimpleGrantedAuthority("ROLE_"+role))
             );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);

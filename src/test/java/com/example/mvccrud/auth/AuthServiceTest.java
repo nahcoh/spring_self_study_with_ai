@@ -115,6 +115,7 @@ public class AuthServiceTest {
         assertThat(response.accessToken()).isNotBlank();
         assertThat(jwtProvider.validateToken(response.accessToken())).isTrue();
         assertThat(jwtProvider.getEmail(response.accessToken())).isEqualTo("kim@test.com");
+        assertThat(jwtProvider.getRole(response.accessToken())).isEqualTo("USER");
     }
 
 }

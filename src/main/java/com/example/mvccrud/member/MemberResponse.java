@@ -25,6 +25,8 @@ public class MemberResponse {
     @Schema(description = "수정 시간", example = "2026-07-08T15:13:30.677527")
     private final LocalDateTime updatedAt;
 
+    private Role role;
+
     public MemberResponse(Member member) {
         this.id = member.getId();
         this.name = member.getName();
@@ -32,6 +34,6 @@ public class MemberResponse {
         this.age = member.getAge();
         this.createdAt = member.getCreatedAt();
         this.updatedAt = member.getUpdatedAt();
-
+        this.role = member.getRole();
     }
 }

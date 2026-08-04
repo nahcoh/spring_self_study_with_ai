@@ -608,6 +608,9 @@ Authorization: Bearer {{$auth.token("")}}
 ---
 - 주문 취소 시 JWT 인증 정보의 memberId와 주문 소유자 memberId를 비교해 본인의 주문만 취소할 수 있도록 소유권 검증 구현
 - 다른 사용자의 주문 취소 시 403 Forbidden 응답 처리
+---
+- JWT 인증 정보의 memberId와 주문 소유자 memberId를 비교해, 사용자가 본인의 주문만 조회/취소할 수 있도록 소유권 검증을 구현했다.
+
 
 ---
 ### 배포 구성
