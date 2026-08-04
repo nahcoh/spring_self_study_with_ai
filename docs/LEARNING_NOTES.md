@@ -1581,6 +1581,27 @@ if(!order.getMemberId().equals(memberId)){
 ```
 이를 통해 인증된 사용자라도 본인의 리소스가 아니면 조작할 수 없도록 인가 로직을 추가했다.
 ---
+## Role 기반 인가
+기존에는 JWT를 통해 사용자의 memberId만 식별했다.
+이번 단계에서는 Member에 Role을 추가하고 JWT claim에 role을 포함했다.
+
+JWT 인증 필터는 토큰에서 role을 꺼내 `ROLE_USER`, `ROLE_ADMIN` 형태의 권한으로 변환한다.
+
+```java
+import java.util.List;
+
+List.of(new SimpleGrantedAuthority("ROLE_" + role));
+```
+이를 통해 SecurityConfig에서 다음과 같은 권한 규칙을 적용할 수 있다.
+```java
+.requestMatchers("/admin/**").hasRole("ADMIN")
+```
+테스트에서는 다음 세 가지를 검증했다.
+```text
+토큰 없음 -> 401
+USER 토큰 -> 403
+ADMIN 토큰 -> 200
+```
 # . 현재까지의 한 줄 요약
 
 ```text

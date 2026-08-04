@@ -9,7 +9,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mvccrud.auth.LoginRequest;
+import com.example.mvccrud.book.Book;
+import com.example.mvccrud.book.BookService;
+import com.example.mvccrud.member.Member;
 import com.example.mvccrud.member.MemberService;
+import com.example.mvccrud.order.OrderCreateRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,6 +34,8 @@ class AdminSecurityIntegrationTest {
     ObjectMapper objectMapper;
     @Autowired
     MemberService memberService;
+    @Autowired
+    private BookService bookService;
 
     @Test
     public void 토큰_없이_관리자_회원_조회하면_401이_나온다() throws Exception{
@@ -108,4 +114,79 @@ class AdminSecurityIntegrationTest {
             .get("accessToken")
             .asText();
     }
+    
+    @Test
+    public void 토큰_없이_관리자_주문_조회하면_401이_나온다() throws Exception{
+        //given
+        mockMvc.perform(get("/admin/members"))
+            .andExpect(status().isUnauthorized());
+        //when
+        
+        //then
+    }
+
+    @Test
+    public void USER는_관리자_주문_조회할_수_없다() throws Exception{
+        //given
+        Member user = makeUser();
+
+        String userToken = loginAndGetAccessToken(user.getEmail());
+        //when
+        //then
+        mockMvc.perform(get("/admin/orders")
+                .header("Authorization", "Bearer " + userToken))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void ADMIN은_관리자로_주문_조회할_수_있다() throws Exception{
+        //given
+        Member admin = makeAdmin();
+        Member user = makeUser();
+
+        Book book = bookService.createBook("ㄷㅁㅇ", 15000);
+
+        String adminToken = loginAndGetAccessToken(admin.getEmail());
+        String userToken = loginAndGetAccessToken(user.getEmail());
+
+        mockMvc.perform(post("/orders")
+                .header("Authorization", "Bearer " + userToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new OrderCreateRequest(book.getId(), 2)
+                )))
+            .andExpect(status().isCreated());
+
+
+        //when
+        //then
+        mockMvc.perform(get("/admin/orders")
+                .header("Authorization", "Bearer " + adminToken)
+                .param("pagee","0")
+                .param("size","10"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].memberName").value("일반회원"))
+            .andExpect(jsonPath("$.data.content[0].bookTitle").value("ㄷㅁㅇ"));
+    }
+
+    public Member makeUser() {
+        Member user = memberService.createMember(
+            "일반회원",
+            "admin-order-user@test.com",
+            "password",
+            30
+        );
+        return user;
+    }
+    public Member makeAdmin() {
+        Member admin = memberService.createAdminMember(
+            "관리자",
+            "admin-order-admin@test.com",
+            "password",
+            30
+        );
+        return admin;
+    }
+
 }
