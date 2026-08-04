@@ -43,6 +43,7 @@ public class SecurityConfig {
                         "/auth/login",
                         "/members"
                     ).permitAll()
+                    .requestMatchers("/admin/**").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.POST, "/orders").authenticated()
                     .requestMatchers(HttpMethod.GET, "/orders/my").authenticated()
                     .requestMatchers(HttpMethod.GET, "/orders/*").authenticated()

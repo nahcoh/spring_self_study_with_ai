@@ -284,4 +284,33 @@ class MemberServiceTest {
     private Member createMember(String name, String email, int age) {
         return memberService.createMember(name, email, "password1234", age);
     }
+
+    @Test
+    public void 관리자_회원_등록_성공() throws Exception{
+        //given
+        Member admin = memberService.createAdminMember(
+            "관리자",
+            "admin@test.com",
+            "password1234",
+            34
+        );
+        //then
+        assertThat(admin.getId()).isNotNull();
+        assertThat(admin.getEmail()).isEqualTo("admin@test.com");
+        assertThat(admin.getRole()).isEqualTo(Role.ADMIN);
+    }
+
+    @Test
+    public void 일반_회원_등록시_ROLE_USER가_부여된다() throws Exception{
+        //given
+        Member member = memberService.createMember(
+            "김철수",
+            "user@test.com",
+            "password1234",
+            20
+        );
+        //then
+        assertThat(member.getRole()).isEqualTo(Role.USER);
+
+    }
 }

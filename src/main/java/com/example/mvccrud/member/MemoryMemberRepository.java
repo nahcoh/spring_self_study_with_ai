@@ -27,7 +27,8 @@ public class MemoryMemberRepository implements MemberRepository{
             member.getName(),
             member.getEmail(),
             member.getPassword(),
-            member.getAge()
+            member.getAge(),
+            member.getRole()
         );
         store.put(id, savedMember);
         return savedMember;

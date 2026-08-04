@@ -24,31 +24,31 @@ public class Member extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    public Member(String name, String email, String password, int age) {
+    public Member(String name, String email, String password, int age){
+        this(name, email, password, age, Role.USER);
+    }
+
+     Member(String name, String email, String password, int age, Role role) {
         validateEmail(email);
         validateName(name);
         validatePassword(password);
         validateAge(age);
+        validateRole(role);
 
         this.name = name;
         this.email = email;
         this.password = password;
         this.age = age;
-        this.role = Role.USER;
+        this.role = role;
     }
 
     Member(Long id, String name, String email, String password, int age) {
-        validateName(name);
-        validateEmail(email);
-        validatePassword(password);
-        validateAge(age);
+        this(id, name, email, password, age, Role.USER);
+    }
 
+    Member(Long id, String name, String email, String password, int age, Role role) {
+        this(name, email, password, age, role);
         this.id = id;
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.age = age;
-        this.role = Role.USER;
     }
 
 
@@ -92,5 +92,10 @@ public class Member extends BaseEntity {
         this.age = age;
     }
 
+    private void validateRole(Role role) {
+        if (role == null) {
+            throw new IllegalArgumentException("권한은 필수입니다.");
+        }
+    }
 
 }

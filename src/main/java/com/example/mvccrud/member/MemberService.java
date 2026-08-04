@@ -21,13 +21,25 @@ public class MemberService {
 
     @Transactional
     public Member createMember(String name, String email, String password, int age) {
+        return createMemberWithRole(name, email, password, age, Role.USER);
+    }
+
+    @Transactional
+    public Member createAdminMember(String name, String email, String password, int age) {
+        return createMemberWithRole(name, email, password, age, Role.ADMIN);
+    }
+
+    private Member createMemberWithRole(String name, String email, String password, int age,
+        Role role) {
         if (memberRepository.existsByEmail(email)) {
             throw new DuplicateEmailException();
         }
-
         String encodedPassword = passwordEncoder.encode(password);
 
-        Member member = new Member(null, name, email, encodedPassword, age);
+        Member member = new Member(
+            name, email, encodedPassword, age, role
+        );
+
         return memberRepository.save(member);
     }
 
@@ -41,6 +53,11 @@ public class MemberService {
 
     public Page<Member> findMembers(Pageable pageable) {
         return memberRepository.findAll(pageable);
+    }
+
+    public Page<MemberResponse> findMemberResponses(Pageable pageable) {
+        return memberRepository.findAll(pageable)
+            .map(MemberResponse::new);
     }
 
     public Member updateMember(Long id, String name, String email, int age) {
