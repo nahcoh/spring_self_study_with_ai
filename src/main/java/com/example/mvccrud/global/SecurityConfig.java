@@ -44,6 +44,7 @@ public class SecurityConfig {
                     ).permitAll()
                     .requestMatchers(HttpMethod.POST, "/orders").authenticated()
                     .requestMatchers(HttpMethod.GET, "/orders/my").authenticated()
+                .requestMatchers(HttpMethod.PATCH, "/orders/*/cancel").authenticated()
                     .anyRequest().permitAll()
             )
             .headers(headers ->

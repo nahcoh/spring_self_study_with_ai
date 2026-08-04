@@ -101,4 +101,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbiddenException(ForbiddenException e) {
+        ErrorResponse response = new ErrorResponse(
+            403,
+            e.getMessage(),
+            null
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
 }

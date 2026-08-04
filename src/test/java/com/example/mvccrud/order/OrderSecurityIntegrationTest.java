@@ -1,6 +1,7 @@
 package com.example.mvccrud.order;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
@@ -176,5 +178,78 @@ public class OrderSecurityIntegrationTest {
         //then
     }
 
+    @Test
+    public void 본인_주문은_취소할_수_있다() throws Exception{
+        //given
+        Member member = memberService.createMember(
+            "김철수",
+            "cancel-owner@test.com",
+            "password1234",
+            30
+        );
+
+        Book book = bookService.createBook("데미안", 15000);
+
+        String accessToken = loginAndGetAccessToken("cancel-owner@test.com");
+
+        String orderResponseBody = mockMvc.perform(post("/orders")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new OrderCreateRequest(book.getId(), 2)
+                )))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        Long orderId = objectMapper.readTree(orderResponseBody)
+            .get("data")
+            .get("id")
+            .asLong();
+        //when//then
+
+        mockMvc.perform(patch("/orders/{id}/cancel", orderId)
+                .header("Authorization", "Bearer " + accessToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.id").value(orderId))
+            .andExpect(jsonPath("$.data.memberId").value(member.getId()))
+            .andExpect(jsonPath("$.data.status").value("CANCELED"));
+    }
+
+
+    @Test
+    public void 토큰_없이_주문_취소하면_401이_나온다() throws Exception{
+        //given
+        Member member = memberService.createMember(
+            "김철수",
+            "cancel-no-token@test.com",
+            "password1234",
+            30
+        );
+
+        Book book = bookService.createBook("eeapa", 14000);
+
+        String accessToken = loginAndGetAccessToken("cancel-no-token@test.com");
+
+        String orderResponseBody = mockMvc.perform(post("/orders")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new OrderCreateRequest(book.getId(), 2)
+                )))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        Long orderId = objectMapper.readTree(orderResponseBody)
+            .get("data")
+            .get("id")
+            .asLong();
+        //when//then
+        mockMvc.perform(patch("/orders/{id}/cancel", orderId))
+            .andExpect(status().isUnauthorized());
+    }
 
 }

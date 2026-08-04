@@ -1549,6 +1549,27 @@ POST /orders는 로그인한 사용자만 접근 가능
 Controller는 SecurityContextHolder에서 CustomUserPrincipal을 꺼내 memberId를 얻고, 그 값을 OrderService에 전달한다.
 
 이를 통해 주문 생성자는 요청 body가 아니라 인증된 사용자 정보로 결정된다.
+
+## 인증 사용자 기반 주문 API
+기존 주문 생성 요청은 body에 memberId를 포함했다.
+```json
+{
+  "memberId": 1,
+  "bookdId": 1,
+  "quantity": 2
+}
+```
+하지만 이 방식은 클라이언트가 다른 회원의 memberId를 임의로 넣을 수 있다는 문제가 있다.'
+
+따라서 주문 생성 요청에서 memberId를 제거하고, JWT 인증 필터가 SecurityContext에 저장한 현재 로그인 사용자의 memberId를 사용하도록 변경했다.
+```json
+{
+  "bookId": 1,
+  "quantity": 2
+}
+```
+또한 `GET /orders/my` API를 추가해 현재 로그인한 사용자의 주문만 조회하도록 구현했다.
+
 ---
 # . 현재까지의 한 줄 요약
 

@@ -2,6 +2,7 @@ package com.example.mvccrud.order;
 
 import com.example.mvccrud.book.Book;
 import com.example.mvccrud.book.BookService;
+import com.example.mvccrud.global.ForbiddenException;
 import com.example.mvccrud.member.Member;
 import com.example.mvccrud.member.MemberService;
 import java.util.List;
@@ -98,5 +99,17 @@ public class OrderService {
         return orderRepository.search(memberId, status, pageable)
             .map(OrderResponse::new);
     }
+
+    @Transactional
+    public Order cancelMyOrder(Long orderId, Long memberId) {
+        Order order = findOrder(orderId);
+
+        if (!order.getMemberId().equals(memberId)) {
+            throw new ForbiddenException("본인의 주문만 취소할 수 있습니다.");
+        }
+        order.cancel();
+        return order;
+    }
+
 
 }

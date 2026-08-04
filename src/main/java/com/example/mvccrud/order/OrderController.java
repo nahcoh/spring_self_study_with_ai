@@ -93,10 +93,16 @@ public class OrderController {
 
     @Operation(summary = "주문 취소",description = "ID에 해당하는 주문을 취소 상태로 변경합니다.")
     @PatchMapping("/{id}/cancel")
-    public ApiResponse<OrderResponse> cancelOrder(@PathVariable Long id) {
-        OrderResponse order = orderService.cancelOrderResponse(id);
+    public ResponseEntity<ApiResponse<OrderResponse>> cancelOrder(@PathVariable Long id) {
+        CustomUserPrincipal principal = getCurrentUser();
 
-        return ApiResponse.of(order);
+        Order order = orderService.cancelMyOrder(
+            id, principal.memberId()
+        );
+
+        return ResponseEntity.ok(
+            new ApiResponse<>(new OrderResponse(order))
+        );
     }
 
     @Operation(summary = "주문 검색", description = "회원 ID와 주문 상태 조건으로 주문을 검색합니다.")
