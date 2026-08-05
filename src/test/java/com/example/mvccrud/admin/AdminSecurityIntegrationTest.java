@@ -1,8 +1,5 @@
 package com.example.mvccrud.admin;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -14,7 +11,6 @@ import com.example.mvccrud.book.Book;
 import com.example.mvccrud.book.BookService;
 import com.example.mvccrud.member.Member;
 import com.example.mvccrud.member.MemberService;
-import com.example.mvccrud.order.Order;
 import com.example.mvccrud.order.OrderCreateRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,7 +116,7 @@ class AdminSecurityIntegrationTest {
     @Test
     public void 토큰_없이_관리자_주문_조회하면_401이_나온다() throws Exception{
         //given
-        mockMvc.perform(get("/admin/members"))
+        mockMvc.perform(get("/admin/orders"))
             .andExpect(status().isUnauthorized());
         //when
         
@@ -164,7 +160,7 @@ class AdminSecurityIntegrationTest {
         //then
         mockMvc.perform(get("/admin/orders")
                 .header("Authorization", "Bearer " + adminToken)
-                .param("pagee","0")
+                .param("page","0")
                 .param("size","10"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.content.length()").value(1))
@@ -176,7 +172,7 @@ class AdminSecurityIntegrationTest {
     public void 토큰_없이_관리자_주문_검색하면_401이_나온다() throws Exception{
         //given
         mockMvc.perform(get("/admin/orders/search")
-                .param("stauts", "ORDERED"))
+                .param("status", "ORDERED"))
             .andExpect(status().isUnauthorized());
         //when
 
@@ -261,4 +257,104 @@ class AdminSecurityIntegrationTest {
         return admin;
     }
 
+    @Test
+    public void 토큰_없이_관리자_주문_강제_취소하면_401이_나온다() throws Exception{
+        //given
+        mockMvc.perform(patch("/admin/orders/{id}/cancel", 1L))
+            .andExpect(status().isUnauthorized());
+        //when
+
+        //then
+    }
+
+    @Test
+    public void USER는_관리자_주문_강제_취소를_할_수_없다() throws Exception{
+        //given
+        Member user = makeUser();
+
+        String userToken = loginAndGetAccessToken(user.getEmail());
+
+        //when//then
+        mockMvc.perform(patch("/admin/orders/{id}/cancel", 1L)
+                .header("Authorization", "Bearer " + userToken))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void ADMIN은_타인의_주문을_강제_취소할_수_있다() throws Exception{
+        //given
+        Member admin = makeAdmin();
+        Member user = makeUser();
+
+        String userToken = loginAndGetAccessToken(user.getEmail());
+        String adminToken = loginAndGetAccessToken(admin.getEmail());
+
+        Book book = bookService.createBook("데미안", 15000);
+
+        String orderResponseBody = mockMvc.perform(post("/orders")
+                .header("Authorization", "Bearer " + userToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new OrderCreateRequest(book.getId(), 2)
+                )))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        Long orderId = objectMapper.readTree(orderResponseBody)
+            .get("data")
+            .get("id")
+            .asLong();
+        //when then
+        mockMvc.perform(patch("/admin/orders/{id}/cancel", orderId)
+                .header("Authorization", "Bearer " + adminToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.id").value(orderId))
+            .andExpect(jsonPath("$.data.status").value("CANCELED"))
+            .andExpect(jsonPath("$.data.memberName").value("일반회원"));
+    }
+
+    @Test
+    public void AMDIN이_강제_취소한_주문은_취소_상태로_검색된다() throws Exception{
+        //given
+        Member admin = makeAdmin();
+        Member user = makeUser();
+
+        Book book = bookService.createBook("데미안", 15000);
+
+        String userToken = loginAndGetAccessToken(user.getEmail());
+        String adminToken = loginAndGetAccessToken(admin.getEmail());
+
+        String orderResponseBody = mockMvc.perform(post("/orders")
+                .header("Authorization", "Bearer " + userToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new OrderCreateRequest(book.getId(), 2)
+                )))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        Long orderId = objectMapper.readTree(orderResponseBody)
+            .get("data")
+            .get("id")
+            .asLong();
+
+        mockMvc.perform(patch("/admin/orders/{id}/cancel", orderId)
+                .header("Authorization", "Bearer " + adminToken))
+            .andExpect(status().isOk());
+
+        //when//then
+        mockMvc.perform(get("/admin/orders/search")
+                .header("Authorization", "Bearer " + adminToken)
+                .param("status", "CANCELED")
+                .param("page", "0")
+                .param("size", "10"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].id").value(orderId))
+            .andExpect(jsonPath("$.data.content[0].status").value("CANCELED"));
+    }
 }
