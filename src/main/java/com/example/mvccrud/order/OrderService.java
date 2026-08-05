@@ -120,6 +120,13 @@ public class OrderService {
         return new OrderResponse(order);
     }
 
+    @Transactional
+    public OrderResponse cancelOrderByAdminResponse(Long orderId) {
+        Order order = findOrder(orderId);
+        order.cancel();
+
+        return new OrderResponse(order);
+    }
 
 
 }

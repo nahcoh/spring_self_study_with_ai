@@ -1,11 +1,16 @@
 package com.example.mvccrud.common;
 
+import static org.aspectj.weaver.tools.cache.SimpleCacheFactory.enabled;
+
+import ch.qos.logback.core.joran.conditional.IfAction;
 import com.example.mvccrud.book.Book;
 import com.example.mvccrud.book.BookService;
 import com.example.mvccrud.member.Member;
+import com.example.mvccrud.member.MemberRepository;
 import com.example.mvccrud.member.MemberService;
 import com.example.mvccrud.order.Order;
 import com.example.mvccrud.order.OrderService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -15,22 +20,46 @@ import org.springframework.stereotype.Component;
 public class DataInitializer implements CommandLineRunner {
 
     private final MemberService memberService;
+    private final MemberRepository memberRepository;
     private final BookService bookService;
     private final OrderService orderService;
 
+    private final boolean adminInitializeEnabled;
+    private final String adminEmail;
+    private final String adminPassword;
+    private final String adminName;
+    private final int adminAge;
+
     public DataInitializer(
         MemberService memberService,
+        MemberRepository memberRepository,
         BookService bookService,
-        OrderService orderService
+        OrderService orderService,
+        @Value("${app.admin.initialize-enabled}") boolean adminInitializeEnabled,
+        @Value("${app.admin.email}") String adminEmail,
+        @Value("${app.admin.password}") String adminPassword,
+        @Value("${app.admin.name}") String adminName,
+        @Value("${app.admin.age}") int adminAge
     ) {
         this.memberService = memberService;
+        this.memberRepository = memberRepository;
         this.bookService = bookService;
         this.orderService = orderService;
+        this.adminInitializeEnabled = adminInitializeEnabled;
+        this.adminEmail = adminEmail;
+        this.adminPassword = adminPassword;
+        this.adminName = adminName;
+        this.adminAge = adminAge;
     }
+
 
     @Override
     public void run(String... args) {
-        if (!memberService.findMembers().isEmpty()) {
+        boolean hasInitialData = !memberService.findMembers().isEmpty();
+
+        createInitialAdmin();
+
+        if (hasInitialData) {
             return;
         }
 
@@ -64,5 +93,29 @@ public class DataInitializer implements CommandLineRunner {
 
         orderService.cancelOrder(order3.getId());
         orderService.cancelOrder(order7.getId());
+    }
+
+    private void createInitialAdmin() {
+        if (!adminInitializeEnabled) {
+            return;
+        }
+
+        if (adminPassword == null || adminPassword.isBlank()) {
+            throw new IllegalStateException(
+                "관리자 초기 비밀번호가 설정되지 않음. ADMIN_PASSWORD 환경변수를 설정해라."
+            );
+        }
+
+        if (memberRepository.existsByEmail(adminEmail)) {
+            return;
+        }
+
+        memberService.createAdminMember(
+            adminName,
+            adminEmail,
+            adminPassword,
+            adminAge
+        );
+
     }
 }
