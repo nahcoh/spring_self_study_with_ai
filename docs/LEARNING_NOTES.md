@@ -6,26 +6,29 @@ README는 프로젝트를 보여주기 위한 문서이고, 이 문서는 학습
 
 ---
 
-## 2026-07-26
+## 학습 타임라인
 
-Redis 캐시, Docker Compose, GitHub Actions CI까지 연결 성공.
+```text
+2026-07-26
+- Redis Cache 적용
+- Docker Compose 구성
+- GitHub Actions CI 연결
 
----
+2026-07-30
+- AWS EC2 Ubuntu 서버 배포
+- Spring Boot App + MySQL + Redis Docker Compose 배포
+- Actuator Health Check 확인
 
-## 2026-07-30
-
-AWS EC2 Ubuntu 서버에 Docker Compose 기반으로 Spring Boot App, MySQL, Redis 배포 성공.
-
-Health Check 응답:
-
-```json
-{
-  "groups": [
-    "liveness",
-    "readiness"
-  ],
-  "status": "UP"
-}
+2026-08
+- Spring Security 적용
+- BCrypt 비밀번호 암호화
+- 로그인 API 구현
+- JWT Access Token 발급
+- JWT 인증 필터 구현
+- SecurityContext 기반 현재 사용자 식별
+- 주문 소유권 기반 인가 구현
+- Role 기반 USER / ADMIN 권한 분리
+- 관리자 API 구현
 ```
 
 ---
@@ -48,7 +51,14 @@ MemoryRepository
 → GitHub Actions CI
 → Actuator Health Check
 → AWS EC2 배포
+→ Nginx Reverse Proxy
+→ GHCR 기반 Docker 이미지 배포
+→ Spring Security
+→ JWT 인증/인가
+→ Role 기반 관리자 API
 ```
+
+이 프로젝트를 통해 단순 CRUD에서 시작해 인증, 인가, 배포, 캐시, 테스트, CI/CD까지 백엔드 애플리케이션의 기본 흐름을 직접 경험했습니다.
 
 ---
 
@@ -87,6 +97,8 @@ Service는 비즈니스 흐름을 담당합니다.
 - 검색
 - 주문 생성
 - 주문 취소
+- 로그인 검증
+- 권한 검증
 - 예외 처리
 - 트랜잭션 관리
 
@@ -112,6 +124,13 @@ Service는 `MemoryBookRepository`나 `JpaBookRepository` 같은 구체 클래스
 
 이를 통해 저장소 구현체가 바뀌어도 Service 코드를 크게 바꾸지 않는 구조를 경험했습니다.
 
+배운 점:
+
+- Controller는 HTTP 계층만 담당하는 것이 좋다.
+- Service는 비즈니스 흐름과 트랜잭션을 담당한다.
+- Repository는 저장소 접근을 담당한다.
+- Service가 Repository 인터페이스에 의존하면 구현체 교체가 쉬워진다.
+
 ---
 
 # 3. DTO를 사용하는 이유
@@ -126,6 +145,19 @@ BookUpdateRequest
 BookPatchRequest
 BookSearchRequest
 BookResponse
+
+MemberCreateRequest
+MemberUpdateRequest
+MemberPatchRequest
+MemberSearchRequest
+MemberResponse
+
+OrderCreateRequest
+OrderSearchRequest
+OrderResponse
+
+LoginRequest
+LoginResponse
 ```
 
 DTO를 분리하면 다음 장점이 있습니다.
@@ -134,6 +166,13 @@ DTO를 분리하면 다음 장점이 있습니다.
 - 요청 검증을 DTO에 적용할 수 있다.
 - 응답에서 필요한 필드만 노출할 수 있다.
 - Entity 변경이 곧바로 API 변경으로 이어지는 것을 막을 수 있다.
+- 비밀번호 같은 민감한 필드를 응답에서 제외할 수 있다.
+
+배운 점:
+
+- Entity를 그대로 API에 노출하면 내부 구조가 외부 API가 되어버린다.
+- Request DTO와 Response DTO를 분리하면 역할이 명확해진다.
+- DTO는 API 경계에서 매우 중요하다.
 
 ---
 
@@ -210,6 +249,7 @@ private int age;
 - Controller 진입 시점에 잘못된 요청을 빠르게 차단할 수 있다.
 - Validation 실패는 `MethodArgumentNotValidException`으로 처리할 수 있다.
 - GlobalExceptionHandler를 사용하면 에러 응답을 일관되게 만들 수 있다.
+- 요청 DTO는 검증 책임을 가지기 좋은 위치다.
 
 ---
 
@@ -225,19 +265,32 @@ MemberNotFoundException
 OrderNotFoundException
 DuplicateEmailException
 InvalidSortException
+ForbiddenException
+LoginFailedException
 MethodArgumentNotValidException
 IllegalArgumentException
 IllegalStateException
 DataIntegrityViolationException
 ```
 
+상황별 응답:
+
+```text
+없는 리소스 조회        → 404 Not Found
+검증 실패              → 400 Bad Request
+중복 이메일            → 400 Bad Request
+잘못된 상태 변경       → 400 Bad Request
+참조 중인 데이터 삭제  → 409 Conflict
+로그인 실패            → 401 Unauthorized
+권한 없는 접근         → 403 Forbidden
+```
+
 배운 점:
 
-- 없는 리소스 조회는 `404 Not Found`
-- 검증 실패는 `400 Bad Request`
-- 중복 이메일은 `400 Bad Request`
-- 잘못된 상태 변경은 `400 Bad Request`
-- 참조 중인 데이터 삭제 실패는 `409 Conflict`
+- 예외 처리를 한곳에 모으면 Controller가 깔끔해진다.
+- 비즈니스 예외를 직접 정의하면 실패 원인을 명확히 표현할 수 있다.
+- 인증 실패와 인가 실패는 구분해야 한다.
+- 인증 실패는 401, 권한 부족은 403이 적절하다.
 
 ---
 
@@ -277,6 +330,7 @@ List<Member> findAll();
 
 - Spring Data JPA를 직접 만든 Repository 인터페이스와 함께 쓸 때는 메서드 시그니처를 조심해야 한다.
 - Service가 Repository 인터페이스에 의존하면 저장소 구현체 변경이 쉬워진다.
+- MemoryRepository로 먼저 구현한 뒤 JPA로 전환하면 Repository 추상화의 의미를 체감할 수 있다.
 
 ---
 
@@ -314,6 +368,10 @@ public class Member extends BaseEntity {
     private String name;
     private String email;
     private int age;
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
 }
 ```
 
@@ -352,6 +410,7 @@ public class Order extends BaseEntity {
 - enum은 `EnumType.STRING`으로 저장하는 것이 안전하다.
 - 다대일 관계는 `@ManyToOne`으로 표현할 수 있다.
 - 기본 fetch 전략을 그대로 쓰기보다 명시적으로 `LAZY`를 설정하는 것이 좋다.
+- Role 같은 권한 값도 enum으로 표현하면 의미가 명확해진다.
 
 ---
 
@@ -372,6 +431,21 @@ Page<Book> search(
     String title,
     Integer minPrice,
     Integer maxPrice,
+    Pageable pageable
+);
+```
+
+Order 검색:
+
+```java
+@Query("""
+    select o from Order o
+    where (:memberId is null or o.member.id = :memberId)
+    and (:status is null or o.status = :status)
+    """)
+Page<Order> search(
+    Long memberId,
+    OrderStatus status,
     Pageable pageable
 );
 ```
@@ -432,6 +506,7 @@ public Order cancelOrder(Long id) {
 - JPA 변경 감지는 트랜잭션 안에서 동작한다.
 - Entity의 상태 변경은 setter보다 의미 있는 행위 메서드로 표현하는 것이 좋다.
 - `cancel()` 같은 도메인 메서드는 단순 필드 변경보다 의도가 명확하다.
+- Service의 트랜잭션 범위가 Entity 상태 변경에 직접적인 영향을 준다.
 
 ---
 
@@ -506,6 +581,7 @@ Service 트랜잭션 종료
 DTO 변환을 Service 트랜잭션 안에서 수행했습니다.
 
 ```java
+@Transactional(readOnly = true)
 public OrderResponse findOrderResponse(Long id) {
     Order order = findOrder(id);
     return new OrderResponse(order);
@@ -579,8 +655,10 @@ GET /books
 GET /books/search
 GET /members
 GET /members/search
-GET /orders
-GET /orders/search
+GET /orders/my
+GET /admin/members
+GET /admin/orders
+GET /admin/orders/search
 ```
 
 요청 예시:
@@ -588,7 +666,7 @@ GET /orders/search
 ```http
 GET /books?page=0&size=5
 GET /members?page=0&size=5&sort=age,desc
-GET /orders/search?status=CANCELED&page=0&size=5
+GET /admin/orders/search?status=CANCELED&page=0&size=5
 ```
 
 Controller에서는 기본값을 설정했습니다.
@@ -705,6 +783,7 @@ id
 name
 email
 age
+role
 createdAt
 updatedAt
 ```
@@ -1263,7 +1342,7 @@ GET http://<EC2_PUBLIC_IP>:8080/actuator/health
 - EC2 내부에 Docker와 Docker Compose를 설치해 컨테이너 기반 배포를 할 수 있다.
 - GitHub 저장소를 clone한 뒤 Docker Compose로 배포할 수 있다.
 - 서버에서는 `git pull` 후 `docker compose up -d --build`로 변경사항을 반영할 수 있다.
-- 이제 프로젝트는 로컬뿐 아니라 인터넷에서 접근 가능한 서버에 배포된 상태가 되었다.
+- 로컬뿐 아니라 인터넷에서 접근 가능한 서버에 프로젝트를 배포했다.
 
 ---
 
@@ -1297,19 +1376,22 @@ data/
 - `git status`에서 untracked 파일을 항상 확인해야 한다.
 - 실수로 `git add .`를 하기 전에 민감한 파일이 포함되어 있는지 확인해야 한다.
 
-
 ---
+
 # 29. Nginx Reverse Proxy
 
-EC2에 배포한 Spring Boot 애플리케이션은 기본적으로 8080 포트에서 실행된다.
+EC2에 배포한 Spring Boot 애플리케이션은 기본적으로 8080 포트에서 실행됩니다.
 
-처음에는 다음 주소로 직접 접근했다.
+처음에는 다음 주소로 직접 접근했습니다.
+
 ```text
 http://<EC2_PUBLIC_IP>:8080
 ```
-하지만 운영 환경에서는 애플리케이션 포트를 외부에 직접 노출하기보다 Nginx가 80번 포트에서 요청을 받고 내부의 Srping Boot 8080 포트를 전달하는 구조를 많이 사용한다.
+
+하지만 운영 환경에서는 애플리케이션 포트를 외부에 직접 노출하기보다 Nginx가 80번 포트에서 요청을 받고 내부의 Spring Boot 8080 포트로 전달하는 구조를 많이 사용합니다.
 
 적용 후 구조:
+
 ```text
 Client
   ↓
@@ -1317,67 +1399,88 @@ Nginx :80
   ↓
 Spring Boot :8080
 ```
-Nginx 설정 중 오타로 문제가 발생했다.
 
-잘못된 설정: 
+Nginx 설정 중 오타로 문제가 발생했습니다.
+
+잘못된 설정:
+
 ```text
 server_name_
 ```
-올바른 설정: 
+
+올바른 설정:
+
 ```text
 server_name _;
 ```
-`server_name`과 `_` 사이에는 공백이 있어야 하고, 마지막에는 세미콜론이 필요하다.
+
+`server_name`과 `_` 사이에는 공백이 있어야 하고, 마지막에는 세미콜론이 필요합니다.
 
 배운 점:
-- Nginx는 Reverse Proxy로 사용할 수 있다. 
+
+- Nginx는 Reverse Proxy로 사용할 수 있다.
 - 외부에는 80 포트만 열고, Spring Boot 8080 포트는 내부에서만 사용하게 만들 수 있다.
 - `sudo nginx -t`로 설정 문법을 검사한 뒤 재시작해야 한다.
-- Nginx설정은 작은 오타 하나로도 실행 실패할 수 있다.
-
+- Nginx 설정은 작은 오타 하나로도 실행 실패할 수 있다.
 
 ---
+
 # 30. GitHub Actions EC2 자동 배포
-기존에는 EC2에 직접 SSH 접속해서 수동으로 배포했다.
+
+기존에는 EC2에 직접 SSH 접속해서 수동으로 배포했습니다.
+
 ```bash
 git pull
 docker compose up -d --build
 ```
-이를 Github Action workflow에 추가해 main브랜치에 push하면 자동 배포되도록 만들었다.
 
-### 발생한 문제
-처음에는 deploy 단계에서 다음 오류가 발생했다.
+이를 GitHub Actions workflow에 추가해 main 브랜치에 push하면 자동 배포되도록 만들었습니다.
+
+발생한 문제:
+
 ```text
 ssh.ParsePrivateKey: ssh: no key found
 dial tcp ***:22: i/o timeout
 ```
-원인은 두 가지였다.
-1. GitHub Secret에 등록한 `EC2_SSH_KEY`값이 올바른 private key 형식이 아니었다.
-2. EC2 보안그룹에서 SSH 22번 포트가 내 IP만 허용되어 있어 GitHub Actions 서버가 접속할 수 없었다.
 
-### 해결 
-- `mvc-crud-key.pem` 내용을 줄바꿈 포함해서 Github Secret에 다시 등록했다.
-- EC2 보안그룹에서 SSH 22번을 GitHub Actions가 접근할 수 있도록 수정했다.
-- workflow에서는 `secrets.EC2_HOST`,`secrets.EC2_USER`,`secrets.EC2_SSH_KEY`를 사용했다.
+원인은 두 가지였습니다.
 
-### 배운 점
-- GitHub Actions에서 EC2로 배포하려면 SSH key를 Github Secrets에 안전하게 저장해야 한다.
+```text
+1. GitHub Secret에 등록한 EC2_SSH_KEY 값이 올바른 private key 형식이 아니었다.
+2. EC2 보안 그룹에서 SSH 22번 포트가 내 IP만 허용되어 있어 GitHub Actions 서버가 접속할 수 없었다.
+```
+
+해결:
+
+- `mvc-crud-key.pem` 내용을 줄바꿈 포함해서 GitHub Secret에 다시 등록했다.
+- EC2 보안 그룹에서 SSH 22번을 GitHub Actions가 접근할 수 있도록 수정했다.
+- workflow에서는 `secrets.EC2_HOST`, `secrets.EC2_USER`, `secrets.EC2_SSH_KEY`를 사용했다.
+
+배운 점:
+
+- GitHub Actions에서 EC2로 배포하려면 SSH key를 GitHub Secrets에 안전하게 저장해야 한다.
 - Secret 이름은 workflow에서 사용하는 이름과 정확히 일치해야 한다.
 - `secret`이 아니라 `secrets`를 사용해야 한다.
-- EC2 보안그룹이 막혀 있으면 workflow에서 SSH 접속이 timeout 된다.
+- EC2 보안 그룹이 막혀 있으면 workflow에서 SSH 접속이 timeout 된다.
 - CI/CD가 구성되면 push 이후 테스트와 배포가 자동화된다.
+
 ---
+
 # 31. GHCR 기반 Docker 이미지 배포
-기존 배포 방식은 EC2 서버에서 직접 Dokcer 이미지를 빌드하는 구조였다.
+
+기존 배포 방식은 EC2 서버에서 직접 Docker 이미지를 빌드하는 구조였습니다.
+
 ```bash
 git pull origin main
 docker compose up -d --build
 ```
-이 방식은 단순하지만 EC2 서버에 빌드 부담이 생긴다. 특히 t3.micro처럼 작은 서버에서는 Dokcer build가 메모리와 디스크를 많이 사용할 수 있다.
 
-이를 개선하기 위해 GitHub Actions에서 Dokcer 이미지를 빌즈하고 GitHub Container Registry에 push하도록 변경했다.
+이 방식은 단순하지만 EC2 서버에 빌드 부담이 생깁니다. 특히 작은 서버에서는 Docker build가 메모리와 디스크를 많이 사용할 수 있습니다.
+
+이를 개선하기 위해 GitHub Actions에서 Docker 이미지를 빌드하고 GitHub Container Registry에 push하도록 변경했습니다.
 
 변경 후 흐름:
+
 ```text
 1. main 브랜치에 push
 2. GitHub Actions에서 테스트 실행
@@ -1387,43 +1490,123 @@ docker compose up -d --build
 6. docker compose pull app
 7. docker compose up -d
 ```
+
 발생한 문제:
+
 ```text
-unalbe to prepare context: path ".true" not found
+unable to prepare context: path ".true" not found
 ```
+
 원인:
-`push: true` 또는 `context: .`설정이 잘못 작성되어 build context가 `.true`로 헤석되었다.
+
+`push: true` 또는 `context: .` 설정이 잘못 작성되어 build context가 `.true`로 해석되었습니다.
+
 올바른 설정:
+
 ```yaml
 context: .
 push: true
 ```
+
 배운 점:
+
 - GitHub Actions에서 Docker 이미지를 빌드할 수 있다.
-- GHCR에 이미지를 push하려면 `packages: write`권한이 필요하다.
+- GHCR에 이미지를 push하려면 `packages: write` 권한이 필요하다.
 - EC2에서 직접 빌드하지 않고 이미지를 pull하는 방식이 더 안정적이다.
 - YAML 오타 하나로 workflow 해석이 완전히 달라질 수 있다.
----
-# 32. Spring Security + JWT 학습 정리
-## 1. 로그인은 왜 POST인가?
-로그인은 단순 조회가 아니라 인증 처리 요청이다.
 
-처리 흐름은 다음과 같다.
+---
+
+# 32. Spring Security 적용
+
+Spring Security를 적용해 API 접근 제어를 시작했습니다.
+
+처음에는 모든 API를 막는 것이 아니라, 로그인/회원가입/Swagger/Health Check 등은 열어두고 보호가 필요한 API부터 잠그는 방식으로 적용했습니다.
+
+기본 설정 예시:
+
+```java
+.authorizeHttpRequests(auth -> auth
+    .requestMatchers(
+        "/actuator/health/**",
+        "/swagger-ui/**",
+        "/v3/api-docs/**",
+        "/h2-console/**",
+        "/auth/login",
+        "/members"
+    ).permitAll()
+    .requestMatchers(HttpMethod.POST, "/orders").authenticated()
+    .anyRequest().permitAll()
+)
+```
+
+배운 점:
+
+- SecurityConfig는 어떤 API를 열고 잠글지를 정의한다.
+- `permitAll()`은 인증 없이 접근 가능하다는 의미다.
+- `authenticated()`는 로그인한 사용자만 접근 가능하다는 의미다.
+- 보호할 API를 점진적으로 늘리는 방식이 학습에 적합했다.
+
+---
+
+# 33. BCrypt 비밀번호 암호화
+
+처음에는 비밀번호를 평문으로 저장할 위험이 있었습니다.
+
+이를 방지하기 위해 `PasswordEncoder`를 사용해 비밀번호를 BCrypt로 암호화했습니다.
+
+```java
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+}
+```
+
+회원 생성 시:
+
+```java
+String encodedPassword = passwordEncoder.encode(password);
+```
+
+로그인 검증 시:
+
+```java
+passwordEncoder.matches(rawPassword, encodedPassword);
+```
+
+배운 점:
+
+- 비밀번호는 절대 평문으로 저장하면 안 된다.
+- BCrypt는 매번 다른 salt를 사용하기 때문에 같은 비밀번호도 다른 해시값이 나온다.
+- 따라서 비밀번호 비교는 문자열 비교가 아니라 `matches()`로 해야 한다.
+
+---
+
+# 34. 로그인 API
+
+로그인은 단순 조회가 아니라 인증 처리 요청입니다.
+
+처리 흐름:
+
 ```text
 email/password 제출
--> 서버가 회원 조회
--> 비밀번호 검증
--> 인증 성공 여부 판단
--> JWT Access Token 발급
+→ 서버가 회원 조회
+→ 비밀번호 검증
+→ 인증 성공 여부 판단
+→ JWT Access Token 발급
 ```
-GET 요청은 URL에 데이터가 노출될 수 있다.
-```http request
+
+GET 요청은 URL에 데이터가 노출될 수 있습니다.
+
+```http
 GET /auth/login?email=kim@test.com&password=password1234
 ```
-이 방식은 비밀번호가 브라우저 히스토리, 서버 로그, 프록시 로그 등에 남을 수 있기 때문에 부적절하다.
 
-따라서 로그인은 요청 body에 자격 증명을 담을 수 있는 POST를 사용한다.
-```http request
+이 방식은 비밀번호가 브라우저 히스토리, 서버 로그, 프록시 로그 등에 남을 수 있기 때문에 부적절합니다.
+
+따라서 로그인은 요청 body에 자격 증명을 담을 수 있는 POST를 사용합니다.
+
+```http
 POST /auth/login
 ```
 
@@ -1433,104 +1616,187 @@ POST /auth/login
   "password": "password1234"
 }
 ```
-POST는 반드시 DB에 데이터를 저장한다는 뜻이 아니라, 서버에 어떤 처리를 요청한다는 의미로 볼 수 있다. 
 
-로그인의 경우 서버는 입력된 자격 증명을 검증하고, 성공하면 JWT를 발급한다.
+POST는 반드시 DB에 데이터를 저장한다는 뜻이 아니라, 서버에 어떤 처리를 요청한다는 의미로 볼 수 있습니다.
 
-## JWT란?
-JWT는 로그인 성공 후 서버가 발급하는 서명된 토큰이다.
+배운 점:
 
-클라이언트는 이후 요청마다 다음 헤더에 토큰을 담아 보낸다.
-```http request
+- 로그인은 단순 조회가 아니라 인증 처리 요청이므로 POST를 사용한다.
+- 비밀번호는 URL에 노출되면 안 되므로 GET 로그인은 부적절하다.
+- 로그인 실패는 401 Unauthorized로 응답하는 것이 적절하다.
+
+---
+
+# 35. JWT란?
+
+JWT는 로그인 성공 후 서버가 발급하는 서명된 토큰입니다.
+
+클라이언트는 이후 요청마다 다음 헤더에 토큰을 담아 보냅니다.
+
+```http
 Authorization: Bearer <accessToken>
 ```
-서버는 JWT를 검증해서 요청을 보낸 사용자가 누구인지 식별한다.
 
-JWT는 암호화가 아니라 서명 기반이다. 
-따라서 Payload는 누구나 디코딩할 수 있으므로 비밀번호나 민감정보를 넣으면 안된다.
+서버는 JWT를 검증해서 요청을 보낸 사용자가 누구인지 식별합니다.
 
-현재 프로젝트에서는 JWT에 다음 정보를 담았다.
+JWT는 암호화가 아니라 서명 기반입니다.
+
+따라서 Payload는 누구나 디코딩할 수 있으므로 비밀번호나 민감정보를 넣으면 안 됩니다.
+
+현재 프로젝트에서는 JWT에 다음 정보를 담았습니다.
+
 ```text
 subject: memberId
 email: 회원 이메일
-issueAt: 발급 시간
+role: USER 또는 ADMIN
+issuedAt: 발급 시간
 expiration: 만료 시간
 ```
-## 3.JwtProvider의 역할
-`JwtProvider`는 JWT를 생성하고 검증하는 책임을 가진다.
+
+배운 점:
+
+- JWT는 서버가 발급한 서명된 인증 정보다.
+- JWT를 요청마다 보내면 서버는 사용자를 식별할 수 있다.
+- JWT Payload에는 민감정보를 넣으면 안 된다.
+- JWT는 인증 정보를 담을 수 있지만, 토큰 탈취 위험도 고려해야 한다.
+
+---
+
+# 36. JwtProvider의 역할
+
+`JwtProvider`는 JWT를 생성하고 검증하는 책임을 가집니다.
+
 주요 역할:
+
 ```text
 1. 로그인 성공 시 Access Token 생성
 2. 토큰 유효성 검증
 3. 토큰에서 memberId 추출
 4. 토큰에서 email 추출
+5. 토큰에서 role 추출
 ```
+
 토큰 생성 흐름:
+
 ```java
 Jwts.builder()
     .subject(String.valueOf(member.getId()))
     .claim("email", member.getEmail())
+    .claim("role", member.getRole().name())
     .issuedAt(now)
     .expiration(expiration)
     .signWith(secretKey)
     .compact();
 ```
-## 4.JwtAuthenticationFilter의 역할
-`JwtAuthenticationFilter`는 요청마다 Authorization 헤더를 확인한다.
-처리 흐름: 
+
+배운 점:
+
+- JWT 생성/검증 책임은 Controller나 Service에 흩어두지 않고 별도 클래스로 분리하는 것이 좋다.
+- role 같은 권한 정보도 JWT claim에 포함할 수 있다.
+- 단, JWT payload는 디코딩 가능하므로 민감정보는 넣지 않아야 한다.
+
+---
+
+# 37. JwtAuthenticationFilter의 역할
+
+`JwtAuthenticationFilter`는 요청마다 Authorization 헤더를 확인합니다.
+
+처리 흐름:
+
 ```text
 1. Authorization 헤더 확인
 2. Bearer 토큰인지 확인
 3. JWT 유효성 검증
-4. 토큰에서 memberId/email 추출
+4. 토큰에서 memberId/email/role 추출
 5. CustomUserPrincipal 생성
 6. Authentication 객체 생성
 7. SecurityContextHolder에 저장
 ```
-즉, 필터는 토큰을 검사해서 SpringSecurity가 이해할 수 있는 인증 정보로 바꿔주는 역할을 한다.
 
-## 5. SecurityContext란? 
-`SecurityContextHolder`는 현재 요청의 인증 정보를 저장하는 공간이다. 
+예시:
 
-JWT 필터가 인증에 성공한면 다음과 같이 인증 객체를 저장한다.
+```java
+UsernamePasswordAuthenticationToken authentication =
+    new UsernamePasswordAuthenticationToken(
+        principal,
+        null,
+        List.of(new SimpleGrantedAuthority("ROLE_" + role))
+    );
+
+SecurityContextHolder.getContext().setAuthentication(authentication);
+```
+
+즉, 필터는 토큰을 검사해서 Spring Security가 이해할 수 있는 인증 정보로 바꿔주는 역할을 합니다.
+
+배운 점:
+
+- JWT 필터는 Authorization 헤더의 토큰을 검증한다.
+- 검증된 사용자 정보는 SecurityContext에 저장된다.
+- Spring Security는 Authentication 객체를 기준으로 현재 사용자를 판단한다.
+- 권한은 `GrantedAuthority` 형태로 넣어야 한다.
+
+---
+
+# 38. SecurityContext란?
+
+`SecurityContextHolder`는 현재 요청의 인증 정보를 저장하는 공간입니다.
+
+JWT 필터가 인증에 성공하면 다음과 같이 인증 객체를 저장합니다.
+
 ```java
 SecurityContextHolder.getContext().setAuthentication(authentication);
 ```
-이후 Controller나 Service에서는 현재 로그인 사용자를 참조할 수 있다. 
 
-## 6. ScurityConfig의 역할
-`SecurityConfig`는 어떤 API를 열고 잠글지를 정의한다.
-현재 설정: 
+이후 Controller에서는 현재 로그인 사용자를 꺼낼 수 있습니다.
+
 ```java
-.requestMatchers(
-    "/actuator/healt/**",
-    "/swagger-ui/**",
-    "/v3/api-docs/**",
-    "/h2-console/**",
-    "/auth/login",
-    "/members"
-).permitAll()
-.requestMatchers(HttpMethod.POST,"/orders").authenticated()
-.anyRequest().permitAll()
+Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+CustomUserPrincipal principal =
+    (CustomUserPrincipal) authentication.getPrincipal();
 ```
-의미:
-```text
-/auth/login, /members 등은 누구나 접근 가능
-POST /orders는 로그인한 사용자만 접근 가능
-나머지는 아직 임시로 허용
-```
-## 7. 이번 단계에서 배운 점
-- 로그인은 단순 조회가 아니라 인증 처리 요청이므로 POST를 사용한다.
-- 비밀번호는 URL에 노출되면 안되므로 GET 로그인은 부적절하다.
-- JWT 발급은 로그인 성공의 결과다.
-- JWT 필터는 Authorization 헤더의 토큰을 검증한다.
-- 검증된 사용자 정보는 SecurityContext에 저장된다.
-- `authenticated()`를 사용하면 특정 API를 로그인 사용자에게만 허용할 수 있다.
-- 보안 설정은 단위 테스트보다 통합 테스트로 검증하는 것이 더 적합하다.
+
+배운 점:
+
+- SecurityContext는 현재 요청의 인증 상태를 담는다.
+- JWT 인증 필터가 SecurityContext에 인증 객체를 넣어주면 Controller에서 현재 사용자를 알 수 있다.
+- 로그인 사용자의 id를 요청 body에서 받는 것보다 SecurityContext에서 가져오는 것이 안전하다.
+
 ---
 
-## 주문 생성과 인증 사용자
-기존에는 주문 생성 요청 body에 memberId를 포함했다.
+# 39. `/auth/me` API
+
+JWT 인증이 정상적으로 동작하는지 확인하기 위해 `/auth/me` API를 구현했습니다.
+
+```http
+GET /auth/me
+Authorization: Bearer <accessToken>
+```
+
+응답 예시:
+
+```json
+{
+  "data": {
+    "memberId": 1,
+    "email": "kim@test.com",
+    "role": "USER"
+  }
+}
+```
+
+배운 점:
+
+- `/auth/me`는 현재 토큰이 누구의 것인지 확인하기 좋은 API다.
+- JWT 필터가 SecurityContext에 인증 정보를 제대로 넣는지 검증할 수 있다.
+- 인증 테스트 초반에 매우 유용했다.
+
+---
+
+# 40. 주문 생성과 인증 사용자
+
+기존에는 주문 생성 요청 body에 `memberId`를 포함했습니다.
+
 ```json
 {
   "memberId": 1,
@@ -1538,87 +1804,362 @@ POST /orders는 로그인한 사용자만 접근 가능
   "quantity": 2
 }
 ```
-하지만 이 방식은 클라이언트가 다른 회원의 memberId를 임의로 넣을 수 있다는 문제가 있다.
-따라서 주문 생성 요청에서는 memberId를 제거하고, JWT 인증 필터가 SecurityContext에 저장한 현재 로그인 사용자 정보를 사용하도록 변경했다.
+
+하지만 이 방식은 클라이언트가 다른 회원의 `memberId`를 임의로 넣을 수 있다는 문제가 있습니다.
+
+따라서 주문 생성 요청에서는 `memberId`를 제거하고, JWT 인증 필터가 SecurityContext에 저장한 현재 로그인 사용자 정보를 사용하도록 변경했습니다.
+
 ```json
 {
   "bookId": 1,
   "quantity": 2
 }
 ```
-Controller는 SecurityContextHolder에서 CustomUserPrincipal을 꺼내 memberId를 얻고, 그 값을 OrderService에 전달한다.
 
-이를 통해 주문 생성자는 요청 body가 아니라 인증된 사용자 정보로 결정된다.
+Controller는 `SecurityContextHolder`에서 `CustomUserPrincipal`을 꺼내 `memberId`를 얻고, 그 값을 `OrderService`에 전달합니다.
 
-## 인증 사용자 기반 주문 API
-기존 주문 생성 요청은 body에 memberId를 포함했다.
-```json
-{
-  "memberId": 1,
-  "bookdId": 1,
-  "quantity": 2
-}
-```
-하지만 이 방식은 클라이언트가 다른 회원의 memberId를 임의로 넣을 수 있다는 문제가 있다.'
+배운 점:
 
-따라서 주문 생성 요청에서 memberId를 제거하고, JWT 인증 필터가 SecurityContext에 저장한 현재 로그인 사용자의 memberId를 사용하도록 변경했다.
-```json
-{
-  "bookId": 1,
-  "quantity": 2
-}
-```
-또한 `GET /orders/my` API를 추가해 현재 로그인한 사용자의 주문만 조회하도록 구현했다.
+- 인증된 사용자 정보는 클라이언트 요청 body에서 받으면 안 된다.
+- 주문 생성자는 요청 body가 아니라 JWT 인증 정보로 결정되어야 한다.
+- 이렇게 해야 다른 사람 이름으로 주문하는 문제를 막을 수 있다.
+
 ---
-## 주문 취소 소유권 검증
-기존에는 로그인한 사용자라면 orderId만 알고 있을 때 다른 사용자으이 주문을 취소할 위험이 있었다.
 
-이를 방지하기 위해 주문 취소 시 JWT 인증 정보에서 추출한 memberId와 주문의 memberId를 비교했다.
+# 41. 인증 사용자 기반 주문 API
+
+현재 로그인한 사용자의 주문만 조회하는 API를 추가했습니다.
+
+```http
+GET /orders/my
+Authorization: Bearer <accessToken>
+```
+
+또한 주문 단건 조회도 본인의 주문만 가능하도록 변경했습니다.
+
+```http
+GET /orders/{id}
+Authorization: Bearer <accessToken>
+```
+
+배운 점:
+
+- `/orders/my`는 현재 로그인 사용자의 리소스만 조회하는 API다.
+- 단순히 로그인 여부만 확인하는 것으로는 부족하다.
+- 리소스가 누구의 것인지 확인하는 인가 로직이 필요하다.
+
+---
+
+# 42. 주문 취소 소유권 검증
+
+기존에는 로그인한 사용자라면 `orderId`만 알고 있을 때 다른 사용자의 주문을 취소할 위험이 있었습니다.
+
+이를 방지하기 위해 주문 취소 시 JWT 인증 정보에서 추출한 `memberId`와 주문의 `memberId`를 비교했습니다.
+
 ```java
-if(!order.getMemberId().equals(memberId)){
+if (!order.getMemberId().equals(memberId)) {
     throw new ForbiddenException("본인의 주문만 취소할 수 있습니다.");
-    }
+}
 ```
-이를 통해 인증된 사용자라도 본인의 리소스가 아니면 조작할 수 없도록 인가 로직을 추가했다.
----
-## Role 기반 인가
-기존에는 JWT를 통해 사용자의 memberId만 식별했다.
-이번 단계에서는 Member에 Role을 추가하고 JWT claim에 role을 포함했다.
 
-JWT 인증 필터는 토큰에서 role을 꺼내 `ROLE_USER`, `ROLE_ADMIN` 형태의 권한으로 변환한다.
+조회도 같은 방식으로 소유권을 검증했습니다.
 
 ```java
-import java.util.List;
-
-List.of(new SimpleGrantedAuthority("ROLE_" + role));
+if (!order.getMemberId().equals(memberId)) {
+    throw new ForbiddenException("본인의 주문만 조회할 수 있습니다.");
+}
 ```
-이를 통해 SecurityConfig에서 다음과 같은 권한 규칙을 적용할 수 있다.
+
+배운 점:
+
+- 인증과 인가는 다르다.
+- 로그인한 사용자라도 모든 리소스에 접근할 수 있는 것은 아니다.
+- 본인의 주문인지 확인하는 소유권 기반 인가가 필요하다.
+- 다른 사용자의 리소스 접근은 403 Forbidden이 적절하다.
+
+---
+
+# 43. Role 기반 인가
+
+기존에는 JWT를 통해 사용자의 `memberId`만 식별했습니다.
+
+이번 단계에서는 `Member`에 `Role`을 추가하고 JWT claim에 role을 포함했습니다.
+
+```java
+public enum Role {
+    USER,
+    ADMIN
+}
+```
+
+JWT 인증 필터는 토큰에서 role을 꺼내 `ROLE_USER`, `ROLE_ADMIN` 형태의 권한으로 변환합니다.
+
+```java
+List.of(new SimpleGrantedAuthority("ROLE_" + role))
+```
+
+이를 통해 SecurityConfig에서 다음과 같은 권한 규칙을 적용할 수 있습니다.
+
 ```java
 .requestMatchers("/admin/**").hasRole("ADMIN")
 ```
-테스트에서는 다음 세 가지를 검증했다.
-```text
-토큰 없음 -> 401
-USER 토큰 -> 403
-ADMIN 토큰 -> 200
-```
-# . 현재까지의 한 줄 요약
+
+테스트에서는 다음 세 가지를 검증했습니다.
 
 ```text
-Spring Boot 기반 CRUD API를 구현하고, JPA/MySQL/Redis/Docker Compose/GitHub Actions/Actuator를 적용한 뒤 AWS EC2에 배포했다.
+토큰 없음 → 401
+USER 토큰 → 403
+ADMIN 토큰 → 200
+```
+
+배운 점:
+
+- Role은 사용자 유형에 따른 권한 분리에 사용된다.
+- Spring Security의 `hasRole("ADMIN")`은 내부적으로 `ROLE_ADMIN` 권한을 확인한다.
+- JWT에 role을 포함하고 필터에서 GrantedAuthority로 변환해야 SecurityConfig에서 사용할 수 있다.
+- 인증은 “너 누구야?”이고, 인가는 “너 이거 해도 돼?”이다.
+
+---
+
+# 44. 관리자 API 구현
+
+관리자 API는 `/admin/**` 경로로 분리했습니다.
+
+구현한 API:
+
+```text
+GET   /admin/members
+GET   /admin/orders
+GET   /admin/orders/search
+PATCH /admin/orders/{id}/cancel
+```
+
+권한 규칙:
+
+```java
+.requestMatchers("/admin/**").hasRole("ADMIN")
+```
+
+관리자 회원 조회:
+
+```http
+GET /admin/members?page=0&size=10
+Authorization: Bearer <adminAccessToken>
+```
+
+관리자 주문 전체 조회:
+
+```http
+GET /admin/orders?page=0&size=10
+Authorization: Bearer <adminAccessToken>
+```
+
+관리자 주문 검색:
+
+```http
+GET /admin/orders/search?memberId=1&status=ORDERED&page=0&size=10
+Authorization: Bearer <adminAccessToken>
+```
+
+관리자 주문 강제 취소:
+
+```http
+PATCH /admin/orders/1/cancel
+Authorization: Bearer <adminAccessToken>
+```
+
+배운 점:
+
+- 관리자 기능은 일반 사용자 API와 경로를 분리하는 것이 좋다.
+- `/orders/{id}/cancel`은 본인 주문 취소 API다.
+- `/admin/orders/{id}/cancel`은 관리자 강제 취소 API다.
+- 같은 “취소”라도 사용자 권한에 따라 API를 분리하면 책임이 명확해진다.
+
+---
+
+# 45. 관리자 계정 생성 방식
+
+일반 회원가입 API에서 role을 받지 않도록 했습니다.
+
+이유:
+
+```text
+클라이언트가 회원가입 요청 body에 role=ADMIN을 넣으면 관리자 계정을 만들 수 있는 위험이 생긴다.
+```
+
+따라서 일반 회원 생성은 항상 `USER`로 만들고, 관리자 계정은 내부 메서드로만 생성하도록 했습니다.
+
+```java
+@Transactional
+public Member createMember(String name, String email, String password, int age) {
+    return createMemberWithRole(name, email, password, age, Role.USER);
+}
+
+@Transactional
+public Member createAdminMember(String name, String email, String password, int age) {
+    return createMemberWithRole(name, email, password, age, Role.ADMIN);
+}
+```
+
+배운 점:
+
+- 권한 상승이 가능한 값을 클라이언트 요청으로 받으면 위험하다.
+- 일반 회원가입은 무조건 USER로 생성하는 것이 안전하다.
+- ADMIN 생성은 테스트, 초기 데이터, 운영자용 내부 절차로 제한해야 한다.
+
+---
+
+# 46. 일반 사용자 API와 관리자 API 분리
+
+일반 사용자 주문 취소 API:
+
+```http
+PATCH /orders/{id}/cancel
+```
+
+특징:
+
+```text
+주문 소유자만 취소 가능
+```
+
+관리자 주문 강제 취소 API:
+
+```http
+PATCH /admin/orders/{id}/cancel
+```
+
+특징:
+
+```text
+ADMIN은 모든 주문 취소 가능
+```
+
+처음 테스트에서 관리자 토큰으로 `/orders/{id}/cancel`을 호출했을 때 403이 발생했습니다.
+
+원인:
+
+```text
+/orders/{id}/cancel은 관리자 API가 아니라 일반 사용자용 본인 주문 취소 API였기 때문
+```
+
+해결:
+
+관리자용 강제 취소 API를 별도로 만들었습니다.
+
+배운 점:
+
+- API 경로는 권한과 책임을 드러내야 한다.
+- 같은 기능처럼 보여도 사용자 관점과 관리자 관점은 다르다.
+- 테스트 실패가 오히려 설계를 명확히 해주는 계기가 되었다.
+
+---
+
+# 47. Security Integration Test
+
+Spring Security와 JWT 인증/인가 흐름은 단위 테스트보다 통합 테스트가 적합했습니다.
+
+검증한 내용:
+
+```text
+로그인 성공 시 JWT 발급
+잘못된 로그인 요청 시 401 Unauthorized
+JWT로 현재 사용자 조회
+토큰 없이 주문 생성 시 401 Unauthorized
+토큰이 있으면 주문 생성 성공
+주문 생성 시 요청 body의 memberId가 아니라 JWT의 memberId 사용
+현재 로그인 사용자의 주문 목록 조회
+다른 사용자의 주문 조회 시 403 Forbidden
+다른 사용자의 주문 취소 시 403 Forbidden
+USER가 관리자 API 접근 시 403 Forbidden
+ADMIN이 관리자 API 접근 시 200 OK
+ADMIN의 전체 회원 조회
+ADMIN의 전체 주문 조회
+ADMIN의 주문 검색
+ADMIN의 주문 강제 취소
+```
+
+테스트에서 확인한 권한 흐름:
+
+```text
+토큰 없음 → 401 Unauthorized
+USER 토큰 → 403 Forbidden
+ADMIN 토큰 → 200 OK
+```
+
+배운 점:
+
+- 보안 설정은 Controller 단위 테스트보다 통합 테스트로 검증하는 것이 좋다.
+- MockMvc로 로그인 → 토큰 추출 → 보호 API 호출 흐름을 검증할 수 있다.
+- 테스트 코드의 경로 오타도 보안 규칙 때문에 통과할 수 있으므로 실제 API 경로를 주의해야 한다.
+- 테스트가 성공해도 테스트 내용이 올바른지 검토해야 한다.
+
+---
+
+# 48. 현재까지의 인증/인가 구조 정리
+
+현재 프로젝트의 인증/인가 구조는 다음과 같습니다.
+
+```text
+1. 회원가입
+   POST /members
+   → 비밀번호 BCrypt 암호화
+   → 기본 Role.USER 저장
+
+2. 로그인
+   POST /auth/login
+   → email/password 검증
+   → JWT Access Token 발급
+
+3. 인증 요청
+   Authorization: Bearer <accessToken>
+   → JwtAuthenticationFilter에서 토큰 검증
+   → SecurityContext에 CustomUserPrincipal 저장
+
+4. 일반 사용자 API
+   POST /orders
+   GET /orders/my
+   GET /orders/{id}
+   PATCH /orders/{id}/cancel
+   → JWT 기반 사용자 식별
+   → 주문 소유권 검증
+
+5. 관리자 API
+   GET /admin/members
+   GET /admin/orders
+   GET /admin/orders/search
+   PATCH /admin/orders/{id}/cancel
+   → Role.ADMIN 권한 필요
 ```
 
 ---
 
-# 30. 다음 학습 후보
+# 49. 현재까지의 한 줄 요약
 
-- HTTPS 적용
-- 운영 DB 분리
-- Docker 이미지 빌드 및 배포 자동화
-- GitHub Actions에서 EC2 배포 자동화
-- Spring Security 기반 로그인
-- JWT 인증 / 인가
-- 회원별 주문 조회 API
-- OrderItem 기반 주문 구조 개선
-- Redis TTL 전략 정리
-- Kubernetes 맛보기
+```text
+Spring Boot 기반 CRUD API를 구현하고, JPA/MySQL/Redis/Docker Compose/GitHub Actions/Actuator/Nginx/GHCR/EC2 배포를 적용한 뒤, Spring Security와 JWT를 통해 인증/인가 및 Role 기반 관리자 API까지 구현했다.
+```
+
+---
+
+# 50. 다음 학습 후보
+
+우선순위가 높은 순서:
+
+```text
+1. Swagger JWT Authorize 설정
+2. 배포 환경용 관리자 계정 생성 방식 정리
+3. Admin 통계 API
+4. Refresh Token / Access Token 재발급 기능
+5. 로그아웃 API
+6. 테스트 코드 Fixture 분리
+7. Redis TTL 전략 정리
+8. 캐시 대상 확장
+9. 운영 환경용 DB 설정 고도화
+10. HTTPS 적용
+11. 주문 구조를 OrderItem 기반으로 확장
+12. API 에러 응답 구조 추가 개선
+13. Kubernetes 맛보기
+```
+
+현재 단계에서는 기능을 계속 무작정 추가하기보다, 인증/인가 구조를 문서화하고 Swagger에서 테스트하기 쉽게 만든 뒤, 관리자 계정 생성 방식과 통계 API를 추가하는 것이 좋다.
